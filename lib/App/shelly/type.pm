@@ -1,4 +1,4 @@
-package App::clrun::type;
+package App::shelly::type;
 
 use strict;
 use warnings;

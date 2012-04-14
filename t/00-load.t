@@ -3,7 +3,7 @@
 use Test::More tests => 1;
 
 BEGIN {
-    use_ok( 'App::clrun' ) || print "Bail out!\n";
+    use_ok( 'App::shelly' ) || print "Bail out!\n";
 }
 
-diag( "Testing App::clrun $App::clrun::VERSION, Perl $], $^X" );
+diag( "Testing App::shelly $App::shelly::VERSION, Perl $], $^X" );

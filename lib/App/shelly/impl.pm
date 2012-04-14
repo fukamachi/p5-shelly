@@ -1,11 +1,11 @@
-package App::clrun::impl;
+package App::shelly::impl;
 
 use strict;
 use warnings;
 
 use Config::ENV 'LISP_IMPL';
 
-my $config = $ENV{HOME} . '/.clrunrc';
+my $config = $ENV{HOME} . '/.shellyrc';
 my $implementations = -e $config ? load($config) : {};
 
 common + {

@@ -5,8 +5,8 @@ use warnings;
 use FindBin qw($Bin);
 use lib "$Bin/../lib";
 
-open my $in,  '<', "$Bin/clrun.PL"     or die $!;
-open my $out, '>', "$Bin/../bin/clrun" or die $!;
+open my $in,  '<', "$Bin/shly.PL"     or die $!;
+open my $out, '>', "$Bin/../bin/shly" or die $!;
 
 local $/ = undef;
 my $startup = <$in>;

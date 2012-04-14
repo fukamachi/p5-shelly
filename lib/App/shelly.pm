@@ -1,15 +1,15 @@
-package App::clrun;
+package App::shelly;
 
 use strict;
 use warnings;
 
 use Getopt::Long qw(:config gnu_getopt pass_through);
 
-use App::clrun::impl;
-use App::clrun::type;
+use App::shelly::impl;
+use App::shelly::type;
 
 sub impl {
-    sub { App::clrun::impl->param(@_); }
+    sub { App::shelly::impl->param(@_); }
 }
 
 sub new {
