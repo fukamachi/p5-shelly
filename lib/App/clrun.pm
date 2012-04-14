@@ -57,6 +57,15 @@ sub doit {
         die 'Unsupported CL implementation: ' . $self->{lisp_impl};
     }
 
+    my $command = $self->_build_command;
+    print $command, "\n";
+
+    system($command);
+}
+
+sub _build_command {
+    my ($self) = @_;
+
     my $lisp_bin = impl->('binary') || $self->{lisp_impl};
 
     my $eval_libs = '';
@@ -93,9 +102,7 @@ sub doit {
       ( $eval_quit ? ( impl->('eval'), $eval_quit ) : () ),
       impl->('other_options');
 
-    print $command, "\n";
-
-    system($command);
+    return $command;
 }
 
 sub canonicalize_arg {

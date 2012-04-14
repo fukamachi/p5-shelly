@@ -64,6 +64,15 @@ $fatpacked{"App/clrun.pm"} = <<'APP_CLRUN';
           die 'Unsupported CL implementation: ' . $self->{lisp_impl};
       }
   
+      my $command = $self->_build_command;
+      print $command, "\n";
+  
+      system($command);
+  }
+  
+  sub _build_command {
+      my ($self) = @_;
+  
       my $lisp_bin = impl->('binary') || $self->{lisp_impl};
   
       my $eval_libs = '';
@@ -83,7 +92,7 @@ $fatpacked{"App/clrun.pm"} = <<'APP_CLRUN';
                     ( join ' ', $fn, @args );
               }
               else {
-                  $eval_expr = "'" . ( join ' ', $fn, @args ) . "'";
+                  $eval_expr = "'(" . ( join ' ', $fn, @args ) . ")'";
               }
               $eval_quit = "'" . impl->('quit') . "'";
           }
@@ -100,9 +109,7 @@ $fatpacked{"App/clrun.pm"} = <<'APP_CLRUN';
         ( $eval_quit ? ( impl->('eval'), $eval_quit ) : () ),
         impl->('other_options');
   
-      print $command, "\n";
-  
-      system($command);
+      return $command;
   }
   
   sub canonicalize_arg {
@@ -136,7 +143,8 @@ $fatpacked{"App/clrun/impl.pm"} = <<'APP_CLRUN_IMPL';
   my $implementations = -e $config ? load($config) : {};
   
   common + {
-      quit => '(quit)',
+      quit         => '(quit)',
+      print_result => 1,
   };
   
   config ccl => +{
@@ -144,7 +152,6 @@ $fatpacked{"App/clrun/impl.pm"} = <<'APP_CLRUN_IMPL';
       eval          => '--eval',
       other_options => '--quiet --batch',
       binary        => $implementations->{ccl},
-      print_result  => 1,
   };
   
   config sbcl => +{
