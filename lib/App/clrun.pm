@@ -74,26 +74,45 @@ sub _build_command {
 
     my $lisp_bin = impl->('binary') || $self->{lisp_impl};
 
-    my $eval_libs = '';
+    my @evals = ();
     if ( @{ $self->{load_libraries} } ) {
-        $eval_libs = sprintf q('(ql:quickload (quote (%s)))'), join ' ',
+        my $eval_libs = sprintf q((ql:quickload (quote (%s)))), join ' ',
           ( map { ":$_" } @{ $self->{load_libraries} } );
+
+        push @evals, $eval_libs;
     }
-    my $eval_expr = '';
-    my $eval_quit = '';
+
     {
         my @args = @{ $self->{argv} };
         my $fn   = shift @args;
+
         if ( defined $fn ) {
             $_ = canonicalize_arg($_) for @args;
+            my $eval_expr = '';
             if ( impl->('print_result') ) {
-                $eval_expr = sprintf "'(ignore-errors (print (%s)))'",
+                $eval_expr = sprintf "(ignore-errors (print (%s)))",
                   ( join ' ', $fn, @args );
             }
             else {
-                $eval_expr = "'(" . ( join ' ', $fn, @args ) . ")'";
+                $eval_expr = "(" . ( join ' ', $fn, @args ) . ")";
             }
-            $eval_quit = "'" . impl->('quit') . "'";
+            push @evals, $eval_expr;
+            push @evals, impl->('quit');
+        }
+        else {
+            push @evals, <<END_OF_LISP;
+(progn
+  (princ "> ")
+  (force-output)
+  (loop for expr = (read-line *terminal-io* nil :eof) \
+        until (eq expr :eof)
+        do (ignore-errors
+             (print (eval (read-from-string (format nil "(~A)" expr)))))
+           (fresh-line)
+           (princ "> ")
+           (force-output)
+        finally @{[ impl->('quit') ]}))
+END_OF_LISP
         }
     }
 
@@ -103,9 +122,7 @@ sub _build_command {
         ? impl->('pre_options')
         : ()
       ),
-      ( $eval_libs ? ( impl->('eval'), $eval_libs ) : () ),
-      ( $eval_expr ? ( impl->('eval'), $eval_expr ) : () ),
-      ( $eval_quit ? ( impl->('eval'), $eval_quit ) : () ),
+      ( map { ( impl->('eval'), "'$_'" ) } @evals ),
       impl->('other_options');
 
     return $command;

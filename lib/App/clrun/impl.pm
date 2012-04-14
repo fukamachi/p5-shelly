@@ -30,6 +30,7 @@ config sbcl => +{
 
 config alisp => +{
     impl_name     => 'alisp',
+    pre_options   => '-L ~/.clinit.cl',
     eval          => '-e',
     quit          => '(exit 0 :quiet t)',
     other_options => '-batch',
