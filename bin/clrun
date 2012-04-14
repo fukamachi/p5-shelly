@@ -65,9 +65,8 @@ $fatpacked{"App/clrun.pm"} = <<'APP_CLRUN';
       }
   
       my $command = $self->_build_command;
-      print $command, "\n";
   
-      system($command);
+      system(qq($command 2>&1));
   }
   
   sub _build_command {
@@ -88,7 +87,7 @@ $fatpacked{"App/clrun.pm"} = <<'APP_CLRUN';
           if ( defined $fn ) {
               $_ = canonicalize_arg($_) for @args;
               if ( impl->('print_result') ) {
-                  $eval_expr = sprintf "'(print (%s))'",
+                  $eval_expr = sprintf "'(print (ignore-errors (%s)))'",
                     ( join ' ', $fn, @args );
               }
               else {
@@ -156,7 +155,7 @@ $fatpacked{"App/clrun/impl.pm"} = <<'APP_CLRUN_IMPL';
   
   config sbcl => +{
       impl_name     => 'sbcl',
-      pre_options   => '--noinform',
+      pre_options   => '--noinform --disable-debugger',
       eval          => '--eval',
       other_options => '--quiet --batch',
       binary        => $implementations->{sbcl},

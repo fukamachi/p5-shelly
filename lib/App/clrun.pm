@@ -58,9 +58,8 @@ sub doit {
     }
 
     my $command = $self->_build_command;
-    print $command, "\n";
 
-    system($command);
+    system(qq($command 2>&1));
 }
 
 sub _build_command {
@@ -81,7 +80,7 @@ sub _build_command {
         if ( defined $fn ) {
             $_ = canonicalize_arg($_) for @args;
             if ( impl->('print_result') ) {
-                $eval_expr = sprintf "'(print (%s))'",
+                $eval_expr = sprintf "'(ignore-errors (print (%s)))'",
                   ( join ' ', $fn, @args );
             }
             else {

@@ -22,7 +22,7 @@ config ccl => +{
 
 config sbcl => +{
     impl_name     => 'sbcl',
-    pre_options   => '--noinform',
+    pre_options   => '--noinform --disable-debugger',
     eval          => '--eval',
     other_options => '--quiet --batch',
     binary        => $implementations->{sbcl},
