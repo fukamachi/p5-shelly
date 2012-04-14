@@ -29,9 +29,12 @@ sub parse_options {
     push @ARGV, @argv;
 
     GetOptions(
-        'impl|I=s' => \my $lisp_impl,
-        'load|L=s' => \my $libraries,
+        'impl|I=s'  => \my $lisp_impl,
+        'load|L=s'  => \my $libraries,
+        'verbose|v' => \my $verbose,
     );
+
+    $self->{verbose} = $verbose;
 
     if ($lisp_impl) {
         $self->{lisp_impl} = $lisp_impl;
@@ -58,6 +61,10 @@ sub doit {
     }
 
     my $command = $self->_build_command;
+
+    if ( $self->{verbose} ) {
+        print $command, "\n";
+    }
 
     system(qq($command 2>&1));
 }
