@@ -9,7 +9,8 @@ my $config = $ENV{HOME} . '/.clrunrc';
 my $implementations = -e $config ? load($config) : {};
 
 common + {
-    quit => '(quit)',
+    quit         => '(quit)',
+    print_result => 1,
 };
 
 config ccl => +{
@@ -29,7 +30,7 @@ config sbcl => +{
 
 config alisp => +{
     impl_name     => 'alisp',
-    eval          => '-eval',
+    eval          => '-e',
     quit          => '(exit 0 :quiet t)',
     other_options => '-batch',
     binary        => $implementations->{alisp},
@@ -40,6 +41,7 @@ config clisp => +{
     eval          => '-x',
     other_options => '-q --quiet',
     binary        => $implementations->{clisp},
+    print_result  => 0,
 };
 
 config cmucl => +{

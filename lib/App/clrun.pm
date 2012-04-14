@@ -71,7 +71,13 @@ sub doit {
         my $fn   = shift @args;
         if ( defined $fn ) {
             $_ = canonicalize_arg($_) for @args;
-            $eval_expr = sprintf "'(print (%s))'", ( join ' ', $fn, @args );
+            if ( impl->('print_result') ) {
+                $eval_expr = sprintf "'(print (%s))'",
+                  ( join ' ', $fn, @args );
+            }
+            else {
+                $eval_expr = "'(" . ( join ' ', $fn, @args ) . ")'";
+            }
             $eval_quit = "'" . impl->('quit') . "'";
         }
     }

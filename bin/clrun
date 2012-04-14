@@ -78,7 +78,13 @@ $fatpacked{"App/clrun.pm"} = <<'APP_CLRUN';
           my $fn   = shift @args;
           if ( defined $fn ) {
               $_ = canonicalize_arg($_) for @args;
-              $eval_expr = sprintf "'(print (%s))'", ( join ' ', $fn, @args );
+              if ( impl->('print_result') ) {
+                  $eval_expr = sprintf "'(print (%s))'",
+                    ( join ' ', $fn, @args );
+              }
+              else {
+                  $eval_expr = "'" . ( join ' ', $fn, @args ) . "'";
+              }
               $eval_quit = "'" . impl->('quit') . "'";
           }
       }
@@ -138,6 +144,7 @@ $fatpacked{"App/clrun/impl.pm"} = <<'APP_CLRUN_IMPL';
       eval          => '--eval',
       other_options => '--quiet --batch',
       binary        => $implementations->{ccl},
+      print_result  => 1,
   };
   
   config sbcl => +{
@@ -150,7 +157,7 @@ $fatpacked{"App/clrun/impl.pm"} = <<'APP_CLRUN_IMPL';
   
   config alisp => +{
       impl_name     => 'alisp',
-      eval          => '-eval',
+      eval          => '-e',
       quit          => '(exit 0 :quiet t)',
       other_options => '-batch',
       binary        => $implementations->{alisp},
@@ -161,6 +168,7 @@ $fatpacked{"App/clrun/impl.pm"} = <<'APP_CLRUN_IMPL';
       eval          => '-x',
       other_options => '-q --quiet',
       binary        => $implementations->{clisp},
+      print_result  => 0,
   };
   
   config cmucl => +{
