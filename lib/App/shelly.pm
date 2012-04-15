@@ -6,7 +6,6 @@ use warnings;
 use Getopt::Long qw(:config gnu_getopt pass_through);
 
 use App::shelly::impl;
-use App::shelly::type;
 
 sub impl {
     sub { App::shelly::impl->param(@_); }
@@ -92,10 +91,7 @@ END_OF_LISP
         my $fn   = shift @args;
 
         if ( defined $fn ) {
-            $_ = canonicalize_arg($_) for @args;
-            my $eval_expr =
-              sprintf
-'(shelly:shelly-interpret (format nil "~{~S~^ ~}" (quote (%s))))',
+            my $eval_expr = sprintf '(shelly:shelly-interpret "%s")',
               ( join ' ', $fn, @args );
             push @evals, $eval_expr;
             push @evals, '(swank-backend:quit-lisp)';
@@ -115,22 +111,6 @@ END_OF_LISP
       impl->('other_options');
 
     return $command;
-}
-
-sub canonicalize_arg {
-    my ($arg) = @_;
-
-    if ( $arg =~ /^--/ ) {
-        $arg =~ s/^--/:/;
-    }
-    elsif ( is_pathname($arg) ) {
-        $arg = qq(\#p"$arg");
-    }
-    elsif ( is_string($arg) ) {
-        $arg = qq("$arg");
-    }
-
-    return $arg;
 }
 
 1;
