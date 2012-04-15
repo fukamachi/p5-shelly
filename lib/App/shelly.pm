@@ -74,7 +74,12 @@ sub _build_command {
 
     my $lisp_bin = impl->('binary') || $self->{lisp_impl};
 
-    my @evals = ();
+    my @evals = (<<END_OF_LISP);
+(let ((*standard-output* (make-broadcast-stream)))
+  (ql:quickload :shelly)
+  (values))
+END_OF_LISP
+
     if ( @{ $self->{load_libraries} } ) {
         my $eval_libs = sprintf q((ql:quickload (quote (%s)))), join ' ',
           ( map { ":$_" } @{ $self->{load_libraries} } );
@@ -88,27 +93,15 @@ sub _build_command {
 
         if ( defined $fn ) {
             $_ = canonicalize_arg($_) for @args;
-            my $eval_expr = "(" . ( join ' ', $fn, @args ) . ")";
-            if ( impl->('print_result') ) {
-                $eval_expr = sprintf "(ignore-errors (princ %s))", $eval_expr;
-            }
+            my $eval_expr =
+              sprintf
+'(shelly:shelly-interpret (format nil "~{~S~^ ~}" (quote (%s))))',
+              ( join ' ', $fn, @args );
             push @evals, $eval_expr;
-            push @evals, impl->('quit');
+            push @evals, '(swank-backend:quit-lisp)';
         }
         else {
-            push @evals, <<END_OF_LISP;
-(progn
-  (princ "> ")
-  (force-output)
-  (loop for expr = (read-line *terminal-io* nil :eof) \
-        until (eq expr :eof)
-        do (ignore-errors
-             (print (eval (read-from-string (format nil "(~A)" expr)))))
-           (fresh-line)
-           (princ "> ")
-           (force-output)
-        finally @{[ impl->('quit') ]}))
-END_OF_LISP
+            push @evals, '(shelly:run-repl)';
         }
     }
 

@@ -9,7 +9,6 @@ my $config = $ENV{HOME} . '/.shellyrc';
 my $implementations = -e $config ? load($config) : {};
 
 common + {
-    quit         => '(quit)',
     print_result => 1,
 };
 
@@ -32,7 +31,6 @@ config alisp => +{
     impl_name     => 'alisp',
     pre_options   => '-L ~/.clinit.cl',
     eval          => '-e',
-    quit          => '(exit 0 :quiet t)',
     other_options => '-batch',
     binary        => $implementations->{alisp},
 };

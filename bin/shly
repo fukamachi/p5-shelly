@@ -81,7 +81,12 @@ $fatpacked{"App/shelly.pm"} = <<'APP_SHELLY';
   
       my $lisp_bin = impl->('binary') || $self->{lisp_impl};
   
-      my @evals = ();
+      my @evals = (<<END_OF_LISP);
+  (let ((*standard-output* (make-broadcast-stream)))
+    (ql:quickload :shelly)
+    (values))
+  END_OF_LISP
+  
       if ( @{ $self->{load_libraries} } ) {
           my $eval_libs = sprintf q((ql:quickload (quote (%s)))), join ' ',
             ( map { ":$_" } @{ $self->{load_libraries} } );
@@ -95,31 +100,15 @@ $fatpacked{"App/shelly.pm"} = <<'APP_SHELLY';
   
           if ( defined $fn ) {
               $_ = canonicalize_arg($_) for @args;
-              my $eval_expr = '';
-              if ( impl->('print_result') ) {
-                  $eval_expr = sprintf "(ignore-errors (print (%s)))",
-                    ( join ' ', $fn, @args );
-              }
-              else {
-                  $eval_expr = "(" . ( join ' ', $fn, @args ) . ")";
-              }
+              my $eval_expr =
+                sprintf
+  '(shelly:shelly-interpret (format nil "~{~S~^ ~}" (quote (%s))))',
+                ( join ' ', $fn, @args );
               push @evals, $eval_expr;
-              push @evals, impl->('quit');
+              push @evals, '(swank-backend:quit-lisp)';
           }
           else {
-              push @evals, <<END_OF_LISP;
-  (progn
-    (princ "> ")
-    (force-output)
-    (loop for expr = (read-line *terminal-io* nil :eof) \
-          until (eq expr :eof)
-          do (ignore-errors
-               (print (eval (read-from-string (format nil "(~A)" expr)))))
-             (fresh-line)
-             (princ "> ")
-             (force-output)
-          finally @{[ impl->('quit') ]}))
-  END_OF_LISP
+              push @evals, '(shelly:run-repl)';
           }
       }
   
@@ -166,7 +155,6 @@ $fatpacked{"App/shelly/impl.pm"} = <<'APP_SHELLY_IMPL';
   my $implementations = -e $config ? load($config) : {};
   
   common + {
-      quit         => '(quit)',
       print_result => 1,
   };
   
@@ -189,7 +177,6 @@ $fatpacked{"App/shelly/impl.pm"} = <<'APP_SHELLY_IMPL';
       impl_name     => 'alisp',
       pre_options   => '-L ~/.clinit.cl',
       eval          => '-e',
-      quit          => '(exit 0 :quiet t)',
       other_options => '-batch',
       binary        => $implementations->{alisp},
   };
