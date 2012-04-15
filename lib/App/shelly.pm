@@ -88,13 +88,9 @@ sub _build_command {
 
         if ( defined $fn ) {
             $_ = canonicalize_arg($_) for @args;
-            my $eval_expr = '';
+            my $eval_expr = "(" . ( join ' ', $fn, @args ) . ")";
             if ( impl->('print_result') ) {
-                $eval_expr = sprintf "(ignore-errors (print (%s)))",
-                  ( join ' ', $fn, @args );
-            }
-            else {
-                $eval_expr = "(" . ( join ' ', $fn, @args ) . ")";
+                $eval_expr = sprintf "(ignore-errors (princ %s))", $eval_expr;
             }
             push @evals, $eval_expr;
             push @evals, impl->('quit');
