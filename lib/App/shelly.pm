@@ -91,7 +91,7 @@ END_OF_LISP
         my $fn   = shift @args;
 
         if ( defined $fn ) {
-            my $eval_expr = sprintf '(shelly:shelly-interpret "%s")',
+            my $eval_expr = sprintf '(shelly:interpret "%s")',
               ( join ' ', $fn, @args );
             push @evals, $eval_expr;
             push @evals, '(swank-backend:quit-lisp)';
