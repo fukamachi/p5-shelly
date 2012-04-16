@@ -6,6 +6,7 @@ use warnings;
 use Getopt::Long qw(:config gnu_getopt pass_through);
 
 use App::shelly::impl;
+use App::shelly::config qw(config);
 
 sub impl {
     sub { App::shelly::impl->param(@_); }
@@ -15,7 +16,7 @@ sub new {
     my ($class) = @_;
 
     return bless {
-        lisp_impl      => $ENV{LISP_IMPL},
+        lisp_impl => $ENV{LISP_IMPL} || config->{default_lisp},
         load_libraries => [],
         argv           => [],
     }, $class;
@@ -29,14 +30,10 @@ sub parse_options {
 
     GetOptions(
         'help|h'   => \$self->{help},
-        'impl|I=s' => \my $lisp_impl,
+        'impl|I=s' => \$self->{lisp_impl},
         'load|L=s' => \my $libraries,
         'debug'    => \$self->{debug},
     );
-
-    if ($lisp_impl) {
-        $self->{lisp_impl} = $lisp_impl;
-    }
 
     if ($libraries) {
         $self->{load_libraries} = [ split ',', $libraries ];
