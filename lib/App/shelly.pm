@@ -28,12 +28,11 @@ sub parse_options {
     push @ARGV, @argv;
 
     GetOptions(
-        'impl|I=s'  => \my $lisp_impl,
-        'load|L=s'  => \my $libraries,
-        'verbose|v' => \my $verbose,
+        'help|h'   => \$self->{help},
+        'impl|I=s' => \my $lisp_impl,
+        'load|L=s' => \my $libraries,
+        'debug'    => \$self->{debug},
     );
-
-    $self->{verbose} = $verbose;
 
     if ($lisp_impl) {
         $self->{lisp_impl} = $lisp_impl;
@@ -52,7 +51,8 @@ sub doit {
     local $ENV{LISP_IMPL} = $self->{lisp_impl};
 
     unless ( $self->{lisp_impl} ) {
-        die 'LISP_IMPL must be set.';
+        print "LISP_IMPL must be set.\n";
+        exit;
     }
 
     unless ( impl->('impl_name') ) {
@@ -61,7 +61,7 @@ sub doit {
 
     my $command = $self->_build_command;
 
-    if ( $self->{verbose} ) {
+    if ( $self->{debug} ) {
         print $command, "\n";
     }
 
@@ -114,3 +114,39 @@ END_OF_LISP
 }
 
 1;
+
+__END__
+
+=head1 NAME
+
+App::shelly
+
+=head1 SYNOPSIS
+
+$ shly [options] [atom...]
+
+Options: -h, -I, -L, --debug
+
+=head1 OPTIONS
+
+=over 4
+
+=item B<-h, --help>
+
+Show this help.
+
+=item B<-I, --impl [implementation]>
+
+Tell what Lisp implementation to use. The default is $LISP_IMPL.
+
+=item B<-L, --load>
+
+Load libraries before executing the expression.
+
+=item B<--debug>
+
+This flag is for Shelly developers.
+
+=back
+
+=cut
