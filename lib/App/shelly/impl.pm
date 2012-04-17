@@ -18,6 +18,7 @@ config ccl => +{
     eval          => '--eval',
     other_options => '--quiet --batch',
     binary        => $impl->{ccl},
+    core_option   => '-I',
 };
 
 config sbcl => +{
@@ -26,6 +27,7 @@ config sbcl => +{
     eval          => '--eval',
     other_options => '--quiet --batch',
     binary        => $impl->{sbcl},
+    core_option   => '--core',
 };
 
 config alisp => +{
@@ -34,6 +36,7 @@ config alisp => +{
     eval          => '-e',
     other_options => '-batch',
     binary        => $impl->{alisp},
+    core_option   => '-I',
 };
 
 config clisp => +{
@@ -42,13 +45,15 @@ config clisp => +{
     other_options => '-q --quiet',
     binary        => $impl->{clisp},
     print_result  => 0,
+    core_option   => '-M',
 };
 
 config cmucl => +{
     impl_name     => 'cmucl',
     eval          => '-eval',
     other_options => '-quiet -batch',
-    binary        => $impl->{cmucl},
+    binary        => $impl->{cmucl} || 'lisp',
+    core_option   => '-core',
 };
 
 config ecl => +{

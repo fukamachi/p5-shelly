@@ -13,6 +13,7 @@ $fatpacked{"App/shelly.pm"} = <<'APP_SHELLY';
   use Getopt::Long qw(:config gnu_getopt pass_through);
   
   use App::shelly::impl;
+  use App::shelly::config qw(config dumped_core_path);
   
   sub impl {
       sub { App::shelly::impl->param(@_); }
@@ -22,7 +23,7 @@ $fatpacked{"App/shelly.pm"} = <<'APP_SHELLY';
       my ($class) = @_;
   
       return bless {
-          lisp_impl      => $ENV{LISP_IMPL},
+          lisp_impl => $ENV{LISP_IMPL} || config->{default_lisp},
           load_libraries => [],
           argv           => [],
       }, $class;
@@ -35,16 +36,13 @@ $fatpacked{"App/shelly.pm"} = <<'APP_SHELLY';
       push @ARGV, @argv;
   
       GetOptions(
-          'impl|I=s'  => \my $lisp_impl,
+          'help|h'    => \$self->{help},
+          'impl|I=s'  => \$self->{lisp_impl},
           'load|L=s'  => \my $libraries,
-          'verbose|v' => \my $verbose,
+          'dump-core' => \$self->{dump_core},
+          'rm-core'   => \$self->{rm_core},
+          'debug'     => \$self->{debug},
       );
-  
-      $self->{verbose} = $verbose;
-  
-      if ($lisp_impl) {
-          $self->{lisp_impl} = $lisp_impl;
-      }
   
       if ($libraries) {
           $self->{load_libraries} = [ split ',', $libraries ];
@@ -59,16 +57,30 @@ $fatpacked{"App/shelly.pm"} = <<'APP_SHELLY';
       local $ENV{LISP_IMPL} = $self->{lisp_impl};
   
       unless ( $self->{lisp_impl} ) {
-          die 'LISP_IMPL must be set.';
+          print "LISP_IMPL must be set.\n";
+          exit 1;
       }
   
       unless ( impl->('impl_name') ) {
-          die 'Unsupported CL implementation: ' . $self->{lisp_impl};
+          print "Unsupported CL implementation: @{[ $self->{lisp_impl} ]}\n";
+          exit 1;
+      }
+  
+      if ( $self->{rm_core} ) {
+          unless ( -e dumped_core_path ) {
+              print "Core file doesn't exist: @{[ dumped_core_path ]}\n";
+              exit 1;
+          }
+  
+          system(qq(rm @{[ dumped_core_path ]}));
+  
+          print "Successfully deleted: @{[ dumped_core_path ]}\n";
+          exit;
       }
   
       my $command = $self->_build_command;
   
-      if ( $self->{verbose} ) {
+      if ( $self->{debug} ) {
           print $command, "\n";
       }
   
@@ -79,6 +91,11 @@ $fatpacked{"App/shelly.pm"} = <<'APP_SHELLY';
       my ($self) = @_;
   
       my $lisp_bin = impl->('binary') || $self->{lisp_impl};
+  
+      if ( -e dumped_core_path ) {
+          $lisp_bin = join ' ',
+            ( $lisp_bin, impl->('core_option'), dumped_core_path );
+      }
   
       my @evals = (<<END_OF_LISP);
   (let ((*standard-output* (make-broadcast-stream)))
@@ -93,12 +110,16 @@ $fatpacked{"App/shelly.pm"} = <<'APP_SHELLY';
           push @evals, $eval_libs;
       }
   
+      if ( $self->{dump_core} ) {
+          push @evals, sprintf '(shelly:dump-core "%s")', dumped_core_path;
+      }
+  
       {
           my @args = @{ $self->{argv} };
           my $fn   = shift @args;
   
           if ( defined $fn ) {
-              my $eval_expr = sprintf '(shelly:shelly-interpret "%s")',
+              my $eval_expr = sprintf '(shelly:interpret "%s")',
                 ( join ' ', $fn, @args );
               push @evals, $eval_expr;
               push @evals, '(swank-backend:quit-lisp)';
@@ -121,7 +142,84 @@ $fatpacked{"App/shelly.pm"} = <<'APP_SHELLY';
   }
   
   1;
+  
+  __END__
+  
+  =head1 NAME
+  
+  App::shelly
+  
+  =head1 SYNOPSIS
+  
+  $ shly [options] [atom...]
+  
+  Options: -h, -I, -L, --debug
+  
+  =head1 OPTIONS
+  
+  =over 4
+  
+  =item B<-h, --help>
+  
+  Show this help.
+  
+  =item B<-I, --impl [implementation]>
+  
+  Tell what Lisp implementation to use. The default is $LISP_IMPL.
+  
+  =item B<-L, --load>
+  
+  Load libraries before executing the expression.
+  
+  =item B<--debug>
+  
+  This flag is for Shelly developers.
+  
+  =back
+  
+  =cut
 APP_SHELLY
+
+$fatpacked{"App/shelly/config.pm"} = <<'APP_SHELLY_CONFIG';
+  package App::shelly::config;
+  
+  use strict;
+  use warnings;
+  use Exporter::Lite;
+  
+  our @EXPORT_OK = qw(config config_path dumped_core_path);
+  
+  my $local_base_path = $ENV{HOME} . '/.shelly/';
+  my $config;
+  
+  sub local_path {
+      return $local_base_path . $_[0];
+  }
+  
+  sub config_path {
+      return local_path('config');
+  }
+  
+  sub dumped_core_path {
+      return local_path('dumped-cores/')
+        . ( $_[0] || ( $ENV{LISP_IMPL} . '.core' ) );
+  }
+  
+  sub config {
+      return $config if $config;
+  
+      my $config_file = config_path;
+  
+      $config =
+        -e $config_file
+        ? do $config_file
+        : { implementations => {} };
+  
+      return $config;
+  }
+  
+  1;
+APP_SHELLY_CONFIG
 
 $fatpacked{"App/shelly/impl.pm"} = <<'APP_SHELLY_IMPL';
   package App::shelly::impl;
@@ -131,8 +229,9 @@ $fatpacked{"App/shelly/impl.pm"} = <<'APP_SHELLY_IMPL';
   
   use Config::ENV 'LISP_IMPL';
   
-  my $config = $ENV{HOME} . '/.shellyrc';
-  my $implementations = -e $config ? load($config) : {};
+  use App::shelly::config;
+  
+  my $impl = App::shelly::config::config->{implementations};
   
   common + {
       print_result => 1,
@@ -142,7 +241,8 @@ $fatpacked{"App/shelly/impl.pm"} = <<'APP_SHELLY_IMPL';
       impl_name     => 'ccl',
       eval          => '--eval',
       other_options => '--quiet --batch',
-      binary        => $implementations->{ccl},
+      binary        => $impl->{ccl},
+      core_option   => '-I',
   };
   
   config sbcl => +{
@@ -150,7 +250,8 @@ $fatpacked{"App/shelly/impl.pm"} = <<'APP_SHELLY_IMPL';
       pre_options   => '--noinform --disable-debugger',
       eval          => '--eval',
       other_options => '--quiet --batch',
-      binary        => $implementations->{sbcl},
+      binary        => $impl->{sbcl},
+      core_option   => '--core',
   };
   
   config alisp => +{
@@ -158,29 +259,32 @@ $fatpacked{"App/shelly/impl.pm"} = <<'APP_SHELLY_IMPL';
       pre_options   => '-L ~/.clinit.cl',
       eval          => '-e',
       other_options => '-batch',
-      binary        => $implementations->{alisp},
+      binary        => $impl->{alisp},
+      core_option   => '-I',
   };
   
   config clisp => +{
       impl_name     => 'clisp',
       eval          => '-x',
       other_options => '-q --quiet',
-      binary        => $implementations->{clisp},
+      binary        => $impl->{clisp},
       print_result  => 0,
+      core_option   => '-M',
   };
   
   config cmucl => +{
       impl_name     => 'cmucl',
       eval          => '-eval',
       other_options => '-quiet -batch',
-      binary        => $implementations->{cmucl},
+      binary        => $impl->{cmucl} || 'lisp',
+      core_option   => '-core',
   };
   
   config ecl => +{
       impl_name     => 'ecl',
       eval          => '-eval',
       other_options => '-q',
-      binary        => $implementations->{ecl},
+      binary        => $impl->{ecl},
   };
   
   1;
@@ -893,8 +997,17 @@ use FindBin qw($Bin);
 use lib "$Bin/../lib", "$Bin/../fatlib";
 use App::shelly;
 
+use Pod::Usage;
+use Pod::Find qw(pod_where);
+
 unless (caller) {
     my $app = App::shelly->new;
     $app->parse_options(@ARGV);
+    if ( $app->{help} ) {
+        pod2usage(
+            verbose => 1,
+            -input  => pod_where( { -inc => 1 }, 'App::shelly' )
+        );
+    }
     $app->doit or exit(1);
 }

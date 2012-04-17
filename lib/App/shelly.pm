@@ -6,7 +6,7 @@ use warnings;
 use Getopt::Long qw(:config gnu_getopt pass_through);
 
 use App::shelly::impl;
-use App::shelly::config qw(config);
+use App::shelly::config qw(config dumped_core_path);
 
 sub impl {
     sub { App::shelly::impl->param(@_); }
@@ -29,10 +29,12 @@ sub parse_options {
     push @ARGV, @argv;
 
     GetOptions(
-        'help|h'   => \$self->{help},
-        'impl|I=s' => \$self->{lisp_impl},
-        'load|L=s' => \my $libraries,
-        'debug'    => \$self->{debug},
+        'help|h'    => \$self->{help},
+        'impl|I=s'  => \$self->{lisp_impl},
+        'load|L=s'  => \my $libraries,
+        'dump-core' => \$self->{dump_core},
+        'rm-core'   => \$self->{rm_core},
+        'debug'     => \$self->{debug},
     );
 
     if ($libraries) {
@@ -49,11 +51,24 @@ sub doit {
 
     unless ( $self->{lisp_impl} ) {
         print "LISP_IMPL must be set.\n";
-        exit;
+        exit 1;
     }
 
     unless ( impl->('impl_name') ) {
-        die 'Unsupported CL implementation: ' . $self->{lisp_impl};
+        print "Unsupported CL implementation: @{[ $self->{lisp_impl} ]}\n";
+        exit 1;
+    }
+
+    if ( $self->{rm_core} ) {
+        unless ( -e dumped_core_path ) {
+            print "Core file doesn't exist: @{[ dumped_core_path ]}\n";
+            exit 1;
+        }
+
+        system(qq(rm @{[ dumped_core_path ]}));
+
+        print "Successfully deleted: @{[ dumped_core_path ]}\n";
+        exit;
     }
 
     my $command = $self->_build_command;
@@ -70,6 +85,11 @@ sub _build_command {
 
     my $lisp_bin = impl->('binary') || $self->{lisp_impl};
 
+    if ( -e dumped_core_path ) {
+        $lisp_bin = join ' ',
+          ( $lisp_bin, impl->('core_option'), dumped_core_path );
+    }
+
     my @evals = (<<END_OF_LISP);
 (let ((*standard-output* (make-broadcast-stream)))
   (ql:quickload :shelly)
@@ -81,6 +101,10 @@ END_OF_LISP
           ( map { ":$_" } @{ $self->{load_libraries} } );
 
         push @evals, $eval_libs;
+    }
+
+    if ( $self->{dump_core} ) {
+        push @evals, sprintf '(shelly:dump-core "%s")', dumped_core_path;
     }
 
     {
