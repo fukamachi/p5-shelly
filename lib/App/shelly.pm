@@ -99,8 +99,9 @@ sub _build_command {
      #+allegro (exit 1 :quiet t)
      #-allegro (quit)))
 
-  (unless (string= "@{[ config->{version} ]}"
-                 (slot-value (asdf:find-system :shelly) (quote asdf:version)))
+  (unless (or (string= "" "@{[ config->{version} || '' ]}")
+              (string= "@{[ config->{version} || '' ]}"
+                       (slot-value (asdf:find-system :shelly) (quote asdf:version))))
     (format *error-output*
             "Warning: different version of Shelly was detected. Try \\\"shly --install\\\".~%")
     (force-output *error-output*))
