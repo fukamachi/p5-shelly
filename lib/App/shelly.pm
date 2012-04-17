@@ -91,8 +91,10 @@ sub _build_command {
           ( $lisp_bin, impl->('core_option'), dumped_core_path );
     }
     else {
-        print
+        if ( $self->{lisp_impl} ne 'ecl' && !$self->{dump_core} ) {
+            print
 "Warning: Core image wasn't found. It is probably slow, isn't it? Try \"shly --dump-core\".\n";
+        }
     }
 
     my @evals = (<<END_OF_LISP);
