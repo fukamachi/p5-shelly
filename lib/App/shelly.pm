@@ -4,6 +4,7 @@ use strict;
 use warnings;
 
 use Getopt::Long qw(:config gnu_getopt pass_through);
+use File::Which qw(which);
 
 use App::shelly::impl;
 use App::shelly::config qw(config dumped_core_path);
@@ -32,6 +33,7 @@ sub parse_options {
         'help|h'    => \$self->{help},
         'impl|I=s'  => \$self->{lisp_impl},
         'load|L=s'  => \my $libraries,
+        'install'   => \$self->{install},
         'dump-core' => \$self->{dump_core},
         'rm-core'   => \$self->{rm_core},
         'debug'     => \$self->{debug},
@@ -47,12 +49,11 @@ sub parse_options {
 sub doit {
     my ($self) = @_;
 
-    local $ENV{LISP_IMPL} = $self->{lisp_impl};
-
     unless ( $self->{lisp_impl} ) {
-        print "LISP_IMPL must be set.\n";
-        exit 1;
+        $self->{lisp_impl} = $self->detect_installed_lisp;
     }
+
+    local $ENV{LISP_IMPL} = $self->{lisp_impl};
 
     unless ( impl->('impl_name') ) {
         print "Unsupported CL implementation: @{[ $self->{lisp_impl} ]}\n";
@@ -65,7 +66,7 @@ sub doit {
             exit 1;
         }
 
-        system(qq(rm @{[ dumped_core_path ]}));
+        unlink dumped_core_path;
 
         print "Successfully deleted: @{[ dumped_core_path ]}\n";
         exit;
@@ -95,6 +96,10 @@ sub _build_command {
   (ql:quickload :shelly)
   (values))
 END_OF_LISP
+
+    if ( $self->{install} ) {
+        push @evals, '(shelly:install-script)';
+    }
 
     if ( @{ $self->{load_libraries} } ) {
         my $eval_libs = sprintf q((ql:quickload (quote (%s)))), join ' ',
@@ -134,6 +139,34 @@ END_OF_LISP
     return $command;
 }
 
+sub detect_installed_lisp {
+    print "LISP_IMPL isn't set. Auto detecting...\n";
+
+    my (@lisp_impl) =
+      grep { which($_) } qw(sbcl ccl alisp clisp cmucl lisp ecl);
+    @lisp_impl = map { $_ eq 'lisp' ? 'cmucl' : $_ } @lisp_impl;
+
+    unless (@lisp_impl) {
+        print "Couldn't detect installed Lisp.\n";
+        exit 1;
+    }
+
+    print "Installed Lisp: " . ( join ', ', @lisp_impl ) . "\n";
+
+    if ( @lisp_impl > 1 ) {
+        print "Which do you prefer? [@{[ $lisp_impl[0] ]}] : ";
+        my $input = <STDIN>;
+
+        exit unless $input;
+
+        chomp $input;
+
+        $input = $lisp_impl[0] unless $input;
+
+        return $input;
+    }
+}
+
 1;
 
 __END__
@@ -146,8 +179,6 @@ App::shelly
 
 $ shly [options] [atom...]
 
-Options: -h, -I, -L, --debug
-
 =head1 OPTIONS
 
 =over 4
@@ -156,6 +187,10 @@ Options: -h, -I, -L, --debug
 
 Show this help.
 
+=item B<--install>
+
+Install Shelly into ~/.shelly/.
+
 =item B<-I, --impl [implementation]>
 
 Tell what Lisp implementation to use. The default is $LISP_IMPL.
@@ -163,6 +198,14 @@ Tell what Lisp implementation to use. The default is $LISP_IMPL.
 =item B<-L, --load>
 
 Load libraries before executing the expression.
+
+=item B<--dump-core>
+
+Dump core image included Shelly for faster startup.
+
+=item B<--rm-core>
+
+Remove a dumped core image.
 
 =item B<--debug>
 

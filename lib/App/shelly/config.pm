@@ -7,7 +7,6 @@ use Exporter::Lite;
 our @EXPORT_OK = qw(config config_path dumped_core_path);
 
 my $local_base_path = $ENV{HOME} . '/.shelly/';
-my $config;
 
 sub local_path {
     return $local_base_path . $_[0];
@@ -29,11 +28,9 @@ sub dumped_core_path {
 }
 
 sub config {
-    return $config if $config;
-
     my $config_file = &config_path;
 
-    $config =
+    my $config =
       -e $config_file
       ? do $config_file
       : {};
