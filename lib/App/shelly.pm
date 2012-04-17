@@ -93,7 +93,17 @@ sub _build_command {
 
     my @evals = (<<END_OF_LISP);
 (let ((*standard-output* (make-broadcast-stream)))
-  (ql:quickload :shelly)
+  (handler-case (ql:quickload :shelly)
+    (quicklisp-client::system-not-found ()
+     (format *error-output* "Shelly is not found. Try (ql:update-all-dists) to ensure your dist is up to date.~%")
+     #+allegro (exit 1 :quiet t)
+     #-allegro (quit)))
+
+  (unless (string= "@{[ config->{version} ]}"
+                 (slot-value (asdf:find-system :shelly) (quote asdf:version)))
+    (format *error-output*
+            "Warning: different version of Shelly was detected. Try \\\"shly --install\\\".~%")
+    (force-output *error-output*))
   (values))
 END_OF_LISP
 
