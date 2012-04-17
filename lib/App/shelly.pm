@@ -166,16 +166,23 @@ sub detect_installed_lisp {
 
     if ( @lisp_impl > 1 ) {
         print "Which do you prefer? [@{[ $lisp_impl[0] ]}] : ";
+
         my $input = <STDIN>;
 
-        exit unless $input;
+        {
+            no warnings 'uninitialized';
+            chomp $input;
+        }
 
-        chomp $input;
-
-        $input = $lisp_impl[0] unless $input;
+        unless ($input) {
+            $input = $lisp_impl[0];
+            print $input, "\n";
+        }
 
         return $input;
     }
+
+    return $lisp_impl[0];
 }
 
 1;

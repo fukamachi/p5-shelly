@@ -106,8 +106,9 @@ $fatpacked{"App/shelly.pm"} = <<'APP_SHELLY';
        #+allegro (exit 1 :quiet t)
        #-allegro (quit)))
   
-    (unless (string= "@{[ config->{version} ]}"
-                   (slot-value (asdf:find-system :shelly) (quote asdf:version)))
+    (unless (or (string= "" "@{[ config->{version} || '' ]}")
+                (string= "@{[ config->{version} || '' ]}"
+                         (slot-value (asdf:find-system :shelly) (quote asdf:version))))
       (format *error-output*
               "Warning: different version of Shelly was detected. Try \\\"shly --install\\\".~%")
       (force-output *error-output*))
@@ -172,16 +173,23 @@ $fatpacked{"App/shelly.pm"} = <<'APP_SHELLY';
   
       if ( @lisp_impl > 1 ) {
           print "Which do you prefer? [@{[ $lisp_impl[0] ]}] : ";
+  
           my $input = <STDIN>;
   
-          exit unless $input;
+          {
+              no warnings 'uninitialized';
+              chomp $input;
+          }
   
-          chomp $input;
-  
-          $input = $lisp_impl[0] unless $input;
+          unless ($input) {
+              $input = $lisp_impl[0];
+              print $input, "\n";
+          }
   
           return $input;
       }
+  
+      return $lisp_impl[0];
   }
   
   1;
