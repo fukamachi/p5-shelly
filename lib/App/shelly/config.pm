@@ -14,6 +14,12 @@ sub local_path {
 }
 
 sub config_path {
+    my ($impl) = @_;
+
+    if ($impl) {
+        return local_path( 'config.' . $impl );
+    }
+
     return local_path('config');
 }
 
@@ -25,12 +31,12 @@ sub dumped_core_path {
 sub config {
     return $config if $config;
 
-    my $config_file = config_path;
+    my $config_file = &config_path;
 
     $config =
       -e $config_file
       ? do $config_file
-      : { implementations => {} };
+      : {};
 
     return $config;
 }

@@ -7,8 +7,6 @@ use Config::ENV 'LISP_IMPL';
 
 use App::shelly::config;
 
-my $impl = App::shelly::config::config->{implementations};
-
 common + {
     print_result => 1,
 };
@@ -17,7 +15,7 @@ config ccl => +{
     impl_name     => 'ccl',
     eval          => '--eval',
     other_options => '--quiet --batch',
-    binary        => $impl->{ccl},
+    binary        => App::shelly::config::config('ccl')->{binary_path},
     core_option   => '-I',
 };
 
@@ -26,7 +24,7 @@ config sbcl => +{
     pre_options   => '--noinform --disable-debugger',
     eval          => '--eval',
     other_options => '--quiet --batch',
-    binary        => $impl->{sbcl},
+    binary        => App::shelly::config::config('sbcl')->{binary_path},
     core_option   => '--core',
 };
 
@@ -35,7 +33,7 @@ config alisp => +{
     pre_options   => '-L ~/.clinit.cl',
     eval          => '-e',
     other_options => '-batch',
-    binary        => $impl->{alisp},
+    binary        => App::shelly::config::config('alisp')->{binary_path},
     core_option   => '-I',
 };
 
@@ -43,7 +41,7 @@ config clisp => +{
     impl_name     => 'clisp',
     eval          => '-x',
     other_options => '-q --quiet',
-    binary        => $impl->{clisp},
+    binary        => App::shelly::config::config('clisp')->{binary_path},
     print_result  => 0,
     core_option   => '-M',
 };
@@ -52,15 +50,15 @@ config cmucl => +{
     impl_name     => 'cmucl',
     eval          => '-eval',
     other_options => '-quiet -batch',
-    binary        => $impl->{cmucl} || 'lisp',
-    core_option   => '-core',
+    binary => App::shelly::config::config('cmucl')->{binary_path} || 'lisp',
+    core_option => '-core',
 };
 
 config ecl => +{
     impl_name     => 'ecl',
     eval          => '-eval',
     other_options => '-q',
-    binary        => $impl->{ecl},
+    binary        => App::shelly::config::config('ecl')->{binary_path},
 };
 
 1;
