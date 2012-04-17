@@ -110,6 +110,7 @@ END_OF_LISP
 
     if ( $self->{install} ) {
         push @evals, '(shelly:install-script)';
+        push @evals, '(swank-backend:quit-lisp)';
     }
 
     if ( @{ $self->{load_libraries} } ) {
