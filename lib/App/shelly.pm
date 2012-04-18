@@ -98,7 +98,7 @@ sub _build_command {
     }
 
     my @evals = ();
-    unless ( -e dumped_core_path ) {
+    if ( $self->{install} || !-e dumped_core_path ) {
         push @evals, <<END_OF_LISP;
 (let ((*standard-output* (make-broadcast-stream)))
   (handler-case (ql:quickload :shelly)
