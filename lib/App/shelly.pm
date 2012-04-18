@@ -127,10 +127,15 @@ END_OF_LISP
     }
 
     if ( @{ $self->{load_libraries} } ) {
-        my $eval_libs = sprintf q((ql:quickload (quote (%s)))), join ' ',
+        my $load_libraries = sprintf q((quote (%s))), join ' ',
           ( map { ":$_" } @{ $self->{load_libraries} } );
 
+        my $eval_libs = sprintf q((ql:quickload %s)), $load_libraries;
         push @evals, $eval_libs;
+
+        my $eval_use = sprintf q((shelly:shadowing-use-package %s)),
+          $load_libraries;
+        push @evals, $eval_use;
     }
 
     if ( $self->{dump_core} ) {
