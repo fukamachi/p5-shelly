@@ -97,14 +97,21 @@ sub _build_command {
         }
     }
 
-    my @evals = (<<END_OF_LISP);
+    my @evals = ();
+    unless ( -e dumped_core_path ) {
+        push @evals, <<END_OF_LISP;
 (let ((*standard-output* (make-broadcast-stream)))
   (handler-case (ql:quickload :shelly)
     (quicklisp-client::system-not-found ()
      (format *error-output* "Shelly is not found. Try (ql:update-all-dists) to ensure your dist is up to date.~%")
      #+allegro (exit 1 :quiet t)
      #-allegro (quit)))
+  (values))
+END_OF_LISP
+    }
 
+    push @evals, <<END_OF_LISP;
+(let ((*standard-output* (make-broadcast-stream)))
   (unless (or (string= "" "@{[ config->{version} || '' ]}")
               (string= "@{[ config->{version} || '' ]}"
                        (slot-value (asdf:find-system :shelly) (quote asdf:version))))
