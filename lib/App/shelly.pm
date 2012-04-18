@@ -110,32 +110,21 @@ sub _build_command {
 END_OF_LISP
     }
 
-    push @evals, <<END_OF_LISP;
-(let ((*standard-output* (make-broadcast-stream)))
-  (unless (or (string= "" "@{[ config->{version} || '' ]}")
-              (string= "@{[ config->{version} || '' ]}"
-                       (slot-value (asdf:find-system :shelly) (quote asdf:version))))
-    (format *error-output*
-            "Warning: different version of Shelly was detected. Try \\\"shly --install\\\".~%")
-    (force-output *error-output*))
-  (values))
-END_OF_LISP
+    if ( config->{version} ) {
+        push @evals, qq((shelly:check-version "@{[ config->{version} ]}"));
+    }
 
     if ( $self->{install} ) {
-        push @evals, '(shelly:install-script)';
-        push @evals, '(swank-backend:quit-lisp)';
+        push @evals, '(shelly:install-script :quit-lisp t)';
     }
 
     if ( @{ $self->{load_libraries} } ) {
         my $load_libraries = sprintf q((quote (%s))), join ' ',
           ( map { ":$_" } @{ $self->{load_libraries} } );
 
-        my $eval_libs = sprintf q((ql:quickload %s)), $load_libraries;
-        push @evals, $eval_libs;
-
-        my $eval_use = sprintf q((shelly:shadowing-use-package %s)),
+        my $eval_libs = sprintf q((shelly:load-libraries %s)),
           $load_libraries;
-        push @evals, $eval_use;
+        push @evals, $eval_libs;
     }
 
     if ( $self->{dump_core} ) {
@@ -144,11 +133,10 @@ END_OF_LISP
 
     {
         my @args = @{ $self->{argv} };
-        my $fn   = shift @args;
 
-        if ( defined $fn ) {
+        if ( @args > 1 ) {
             my $eval_expr = sprintf '(shelly:interpret %s)',
-              ( join " ", ( map { "\"$_\"" } $fn, @args ) );
+              ( join " ", ( map { "\"$_\"" } @args ) );
             push @evals, $eval_expr;
             push @evals, '(swank-backend:quit-lisp)';
         }
