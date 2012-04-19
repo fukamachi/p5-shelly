@@ -105,7 +105,7 @@ END_OF_LISP
     }
 
     if ( @{ $self->{load_libraries} } ) {
-        my $load_libraries = sprintf q((quote (%s))), join ' ',
+        my $load_libraries = join ' ',
           ( map { ":$_" } @{ $self->{load_libraries} } );
 
         my $eval_libs = sprintf q((shelly:load-libraries %s)),
