@@ -102,7 +102,8 @@ END_OF_LISP
 
     for ( @{ $self->{load_libraries} } ) {
         push @evals, "(ql:quickload :$_)";
-        push @evals, "(shelly.util::shadowing-use-package :$_)";
+        push @evals,
+          "(and (find-package :$_) (shelly.util::shadowing-use-package :$_))";
     }
 
     {
