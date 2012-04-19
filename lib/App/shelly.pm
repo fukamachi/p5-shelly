@@ -30,7 +30,6 @@ sub parse_options {
     push @ARGV, @argv;
 
     GetOptions(
-        'help|h'   => \$self->{help},
         'impl|I=s' => \$self->{lisp_impl},
         'load|L=s' => \my $libraries,
         'debug'    => \$self->{debug},
@@ -182,10 +181,6 @@ $ shly [options] [atom...]
 =head1 OPTIONS
 
 =over 4
-
-=item B<-h, --help>
-
-Show this help.
 
 =item B<-I, --impl [implementation]>
 
