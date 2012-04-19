@@ -116,7 +116,7 @@ END_OF_LISP
     {
         my @args = @{ $self->{argv} };
 
-        if ( @args > 1 ) {
+        if ( @args > 0 ) {
             my $eval_expr = sprintf '(shelly:interpret %s)',
               ( join " ", ( map { "\"$_\"" } @args ) );
             push @evals, $eval_expr;
