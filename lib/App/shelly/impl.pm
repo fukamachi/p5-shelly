@@ -14,7 +14,7 @@ common + {
 config ccl => +{
     impl_name     => 'ccl',
     eval          => '--eval',
-    other_options => '--quiet --batch',
+    other_options => '--quiet',
     binary        => App::shelly::config::config('ccl')->{binary_path},
     core_option   => '-I',
 };
@@ -23,7 +23,7 @@ config sbcl => +{
     impl_name     => 'sbcl',
     pre_options   => '--noinform --disable-debugger',
     eval          => '--eval',
-    other_options => '--quiet --batch',
+    other_options => '--quiet',
     binary        => App::shelly::config::config('sbcl')->{binary_path},
     core_option   => '--core',
 };

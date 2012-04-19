@@ -92,6 +92,7 @@ sub _build_command {
      #-allegro (quit)))
   (values))
 END_OF_LISP
+        push @evals, '(shelly.util::shadowing-use-package :shelly)';
     }
 
     if ( config->{version} ) {
@@ -99,13 +100,9 @@ END_OF_LISP
           qq((shelly.util::check-version "@{[ config->{version} ]}"));
     }
 
-    if ( @{ $self->{load_libraries} } ) {
-        my $load_libraries = join ' ',
-          ( map { ":$_" } @{ $self->{load_libraries} } );
-
-        my $eval_libs = sprintf q((shelly.util::load-libraries %s)),
-          $load_libraries;
-        push @evals, $eval_libs;
+    for ( @{ $self->{load_libraries} } ) {
+        push @evals, "(ql:quickload :$_)";
+        push @evals, "(shelly.util::shadowing-use-package :$_)";
     }
 
     {
