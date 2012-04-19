@@ -33,7 +33,6 @@ sub parse_options {
         'help|h'   => \$self->{help},
         'impl|I=s' => \$self->{lisp_impl},
         'load|L=s' => \my $libraries,
-        'install'  => \$self->{install},
         'debug'    => \$self->{debug},
     );
 
@@ -72,19 +71,18 @@ sub _build_command {
 
     my $lisp_bin = impl->('binary') || $self->{lisp_impl};
 
+    my @evals = ();
+
     if ( -e dumped_core_path ) {
         $lisp_bin = join ' ',
           ( $lisp_bin, impl->('core_option'), dumped_core_path );
     }
     else {
-        if ( $self->{lisp_impl} ne 'ecl' && !$self->{install} ) {
+        unless ( $self->{lisp_impl} eq 'ecl' ) {
             print
 "Warning: Core image wasn't found. It is probably slow, isn't it? Try \"shly shelly:dump-core\".\n";
         }
-    }
 
-    my @evals = ();
-    if ( $self->{install} || !-e dumped_core_path ) {
         push @evals, <<END_OF_LISP;
 (let ((*standard-output* (make-broadcast-stream)))
   (handler-case (ql:quickload :shelly)
@@ -97,18 +95,15 @@ END_OF_LISP
     }
 
     if ( config->{version} ) {
-        push @evals, qq((shelly:check-version "@{[ config->{version} ]}"));
-    }
-
-    if ( $self->{install} ) {
-        push @evals, '(shelly:install-script :quit-lisp t)';
+        push @evals,
+          qq((shelly.util::check-version "@{[ config->{version} ]}"));
     }
 
     if ( @{ $self->{load_libraries} } ) {
         my $load_libraries = join ' ',
           ( map { ":$_" } @{ $self->{load_libraries} } );
 
-        my $eval_libs = sprintf q((shelly:load-libraries %s)),
+        my $eval_libs = sprintf q((shelly.util::load-libraries %s)),
           $load_libraries;
         push @evals, $eval_libs;
     }
@@ -117,13 +112,13 @@ END_OF_LISP
         my @args = @{ $self->{argv} };
 
         if ( @args > 0 ) {
-            my $eval_expr = sprintf '(shelly:interpret %s)',
+            my $eval_expr = sprintf '(shelly.core::interpret %s)',
               ( join " ", ( map { "\"$_\"" } @args ) );
             push @evals, $eval_expr;
             push @evals, '(swank-backend:quit-lisp)';
         }
         else {
-            push @evals, '(shelly:run-repl)';
+            push @evals, '(shelly::run-repl)';
         }
     }
 
@@ -193,10 +188,6 @@ $ shly [options] [atom...]
 =item B<-h, --help>
 
 Show this help.
-
-=item B<--install>
-
-Install Shelly into ~/.shelly/.
 
 =item B<-I, --impl [implementation]>
 
