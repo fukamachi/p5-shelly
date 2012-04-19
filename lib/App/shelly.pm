@@ -80,7 +80,7 @@ sub _build_command {
     else {
         unless ( $self->{lisp_impl} eq 'ecl' ) {
             print
-"Warning: Core image wasn't found. It is probably slow, isn't it? Try \"shly shelly:dump-core\".\n";
+"Warning: Core image wasn't found. It is probably slow, isn't it? Try \"shly dump-core\".\n";
         }
 
         push @evals, <<END_OF_LISP;
