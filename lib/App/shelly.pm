@@ -30,13 +30,11 @@ sub parse_options {
     push @ARGV, @argv;
 
     GetOptions(
-        'help|h'    => \$self->{help},
-        'impl|I=s'  => \$self->{lisp_impl},
-        'load|L=s'  => \my $libraries,
-        'install'   => \$self->{install},
-        'dump-core' => \$self->{dump_core},
-        'rm-core'   => \$self->{rm_core},
-        'debug'     => \$self->{debug},
+        'help|h'   => \$self->{help},
+        'impl|I=s' => \$self->{lisp_impl},
+        'load|L=s' => \my $libraries,
+        'install'  => \$self->{install},
+        'debug'    => \$self->{debug},
     );
 
     if ($libraries) {
@@ -60,18 +58,6 @@ sub doit {
         exit 1;
     }
 
-    if ( $self->{rm_core} ) {
-        unless ( -e dumped_core_path ) {
-            print "Core file doesn't exist: @{[ dumped_core_path ]}\n";
-            exit 1;
-        }
-
-        unlink dumped_core_path;
-
-        print "Successfully deleted: @{[ dumped_core_path ]}\n";
-        exit;
-    }
-
     my $command = $self->_build_command;
 
     if ( $self->{debug} ) {
@@ -91,9 +77,9 @@ sub _build_command {
           ( $lisp_bin, impl->('core_option'), dumped_core_path );
     }
     else {
-        if ( $self->{lisp_impl} ne 'ecl' && !$self->{dump_core} ) {
+        if ( $self->{lisp_impl} ne 'ecl' && !$self->{install} ) {
             print
-"Warning: Core image wasn't found. It is probably slow, isn't it? Try \"shly --dump-core\".\n";
+"Warning: Core image wasn't found. It is probably slow, isn't it? Try \"shly shelly:dump-core\".\n";
         }
     }
 
@@ -125,10 +111,6 @@ END_OF_LISP
         my $eval_libs = sprintf q((shelly:load-libraries %s)),
           $load_libraries;
         push @evals, $eval_libs;
-    }
-
-    if ( $self->{dump_core} ) {
-        push @evals, sprintf '(shelly:dump-core "%s")', dumped_core_path;
     }
 
     {
@@ -223,14 +205,6 @@ Tell what Lisp implementation to use. The default is $LISP_IMPL.
 =item B<-L, --load>
 
 Load libraries before executing the expression.
-
-=item B<--dump-core>
-
-Dump core image included Shelly for faster startup.
-
-=item B<--rm-core>
-
-Remove a dumped core image.
 
 =item B<--debug>
 
