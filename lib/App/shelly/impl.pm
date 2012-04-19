@@ -7,9 +7,7 @@ use Config::ENV 'LISP_IMPL';
 
 use App::shelly::config;
 
-common + {
-    print_result => 1,
-};
+common + {};
 
 config ccl => +{
     impl_name     => 'ccl',
@@ -42,7 +40,6 @@ config clisp => +{
     eval          => '-x',
     other_options => '-q --quiet',
     binary        => App::shelly::config::config('clisp')->{binary_path},
-    print_result  => 0,
     core_option   => '-M',
 };
 
