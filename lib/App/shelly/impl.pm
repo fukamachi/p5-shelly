@@ -15,6 +15,7 @@ config ccl => +{
     other_options => '--quiet',
     binary        => App::shelly::config::config('ccl')->{binary_path},
     core_option   => '-I',
+    noinit_option => '--no-init',
 };
 
 config sbcl => +{
@@ -24,15 +25,17 @@ config sbcl => +{
     other_options => '--quiet',
     binary        => App::shelly::config::config('sbcl')->{binary_path},
     core_option   => '--core',
+    noinit_option => '--no-userinit',
 };
 
 config alisp => +{
     impl_name     => 'alisp',
     pre_options   => '-L ~/.clinit.cl',
     eval          => '-e',
-    other_options => '-batch',
+    other_options => '',
     binary        => App::shelly::config::config('alisp')->{binary_path},
     core_option   => '-I',
+    noinit_option => '-q',
 };
 
 config clisp => +{
@@ -41,6 +44,7 @@ config clisp => +{
     other_options => '-q --quiet',
     binary        => App::shelly::config::config('clisp')->{binary_path},
     core_option   => '-M',
+    noinit_option => '-norc',
 };
 
 config cmucl => +{
@@ -49,6 +53,7 @@ config cmucl => +{
     other_options => '-quiet -batch',
     binary => App::shelly::config::config('cmucl')->{binary_path} || 'lisp',
     core_option => '-core',
+    noinit_option => '-noinit',
 };
 
 config ecl => +{
@@ -56,6 +61,7 @@ config ecl => +{
     eval          => '-eval',
     other_options => '-q',
     binary        => App::shelly::config::config('ecl')->{binary_path},
+    noinit_option => '-norc',
 };
 
 1;

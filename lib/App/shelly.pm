@@ -30,8 +30,10 @@ sub parse_options {
     push @ARGV, @argv;
 
     GetOptions(
+        'help|h'   => \$self->{help},
         'impl|I=s' => \$self->{lisp_impl},
         'load|L=s' => \my $libraries,
+        'no-init'  => \$self->{noinit},
         'debug'    => \$self->{debug},
     );
 
@@ -40,6 +42,11 @@ sub parse_options {
     }
 
     $self->{argv} = \@ARGV;
+
+    if ($self->{help}) {
+        $self->{noinit} = 1;
+        $self->{argv} = [ 'shelly::help' ];
+    }
 }
 
 sub doit {
@@ -69,6 +76,10 @@ sub _build_command {
     my ($self) = @_;
 
     my $lisp_bin = impl->('binary') || $self->{lisp_impl};
+
+    if ($self->{noinit}) {
+        $lisp_bin .= ' ' . impl->('noinit_option');
+    }
 
     my @evals = ();
 
@@ -182,13 +193,21 @@ $ shly [options] [atom...]
 
 =over 4
 
+=item B<-h, --help>
+
+Show this help.
+
 =item B<-I, --impl [implementation]>
 
 Tell what Lisp implementation to use. The default is $LISP_IMPL.
 
-=item B<-L, --load>
+=item B<-L, --load [library1,library2,...]>
 
 Load libraries before executing the expression.
+
+=item B<--no-init>
+
+Do not load the user init file.
 
 =item B<--debug>
 
