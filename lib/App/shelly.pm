@@ -34,6 +34,7 @@ sub parse_options {
         'impl|I=s' => \$self->{lisp_impl},
         'load|L=s' => \my $libraries,
         'no-init'  => \$self->{noinit},
+        'verbose'  => \$self->{verbose},
         'debug'    => \$self->{debug},
     );
 
@@ -43,9 +44,9 @@ sub parse_options {
 
     $self->{argv} = \@ARGV;
 
-    if ($self->{help}) {
+    if ( $self->{help} ) {
         $self->{noinit} = 1;
-        $self->{argv} = [ 'shelly::help' ];
+        $self->{argv}   = ['shelly::help'];
     }
 }
 
@@ -77,7 +78,7 @@ sub _build_command {
 
     my $lisp_bin = impl->('binary') || $self->{lisp_impl};
 
-    if ($self->{noinit}) {
+    if ( $self->{noinit} ) {
         $lisp_bin .= ' ' . impl->('noinit_option');
     }
 
@@ -120,13 +121,16 @@ END_OF_LISP
         my @args = @{ $self->{argv} };
 
         if ( @args > 0 ) {
-            my $eval_expr = sprintf '(shelly.core::interpret %s)',
-              ( join " ", ( map { "\"$_\"" } @args ) );
+            my $eval_expr =
+              sprintf '(shelly.core::interpret (list %s) :verbose %s)',
+              ( join " ", ( map { "\"$_\"" } @args ) ),
+              $self->{verbose} ? 't' : 'nil';
             push @evals, $eval_expr;
             push @evals, '(swank-backend:quit-lisp)';
         }
         else {
-            push @evals, '(shelly::run-repl)';
+            push @evals, sprintf '(shelly::run-repl :verbose %s)',
+              $self->{verbose} ? 't' : 'nil';
         }
     }
 
@@ -204,6 +208,10 @@ Tell what Lisp implementation to use. The default is $LISP_IMPL.
 =item B<-L, --load [library1,library2,...]>
 
 Load libraries before executing the expression.
+
+=item B<--verbose>
+
+Print some informations.
 
 =item B<--no-init>
 
