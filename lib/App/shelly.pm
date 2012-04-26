@@ -77,7 +77,7 @@ sub doit {
 sub _build_command {
     my ($self) = @_;
 
-    my $lisp_bin = impl->('binary') || $self->{lisp_impl};
+    my $lisp_bin = impl->('binary') || $ENV{LISP_BINARY} || $self->{lisp_impl};
 
     if ( $self->{noinit} ) {
         $lisp_bin .= ' ' . impl->('noinit_option');
