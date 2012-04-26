@@ -23,5 +23,5 @@ my $startup = <$in>;
 print $out '#!/usr/bin/env perl', "\n";
 print $out scalar `$^X -e "use App::FatPacker -run_script" file`;
 print $out $startup;
-print $out "\n__END__\n";
+print $out "\n__END__\n\n";
 print $out $pod;
