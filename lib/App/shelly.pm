@@ -61,6 +61,7 @@ sub doit {
 
     unless ( impl->('impl_name') ) {
         print "Unsupported CL implementation: @{[ $self->{lisp_impl} ]}\n";
+        print qq(It must be one of "sbcl", "ccl", "alisp", "clisp", "cmucl" or "ecl".\n);
         exit 1;
     }
 
