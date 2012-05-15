@@ -79,6 +79,8 @@ sub _build_command {
 
     my $lisp_bin = $ENV{LISP_BINARY} || impl->('binary') || $self->{lisp_impl};
 
+    $ENV{LISP_BINARY} = $lisp_bin;
+
     if ( $self->{noinit} ) {
         $lisp_bin .= ' ' . impl->('noinit_option');
     }
