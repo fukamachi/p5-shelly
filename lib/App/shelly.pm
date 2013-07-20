@@ -124,6 +124,7 @@ END_OF_LISP
         my @args = @{ $self->{argv} };
 
         if ( @args > 0 ) {
+            s/^\'/'\\''/ for @args;
             my $eval_expr =
               sprintf '(shelly.core::interpret (list %s) :verbose %s)',
               ( join " ", ( map { "\"$_\"" } @args ) ),
