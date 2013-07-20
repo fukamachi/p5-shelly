@@ -33,6 +33,7 @@ sub parse_options {
         'help|h'   => \$self->{help},
         'impl|I=s' => \$self->{lisp_impl},
         'load|L=s' => \my $libraries,
+        'file|f=s' => \$self->{shlyfile},
         'no-init'  => \$self->{noinit},
         'verbose'  => \$self->{verbose},
         'debug'    => \$self->{debug},
@@ -120,8 +121,9 @@ END_OF_LISP
         push @evals, "(shelly.util::load-systems :$_)";
     }
 
-    if (-f "shlyfile") {
-        push @evals, '(shelly.util::load-shlyfile #P"shlyfile")';
+    my $shlyfile = $self->{shlyfile} || 'shlyfile';
+    if (-f $shlyfile) {
+        push @evals, qq{(shelly.util::load-shlyfile #P"$shlyfile")};
     }
 
     {
