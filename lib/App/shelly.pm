@@ -93,7 +93,7 @@ sub _build_command {
     }
     else {
         unless ( $self->{lisp_impl} eq 'ecl' ) {
-            print
+            print STDERR
 "Warning: Core image wasn't found. It is probably slow, isn't it? Try \"shly dump-core\".\n";
         }
 
@@ -118,6 +118,10 @@ END_OF_LISP
 
     for ( @{ $self->{load_libraries} } ) {
         push @evals, "(shelly.util::load-systems :$_)";
+    }
+
+    if (-f "shlyfile") {
+        push @evals, '(shelly.util::load-shlyfile #P"shlyfile")';
     }
 
     {
