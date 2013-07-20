@@ -101,7 +101,7 @@ sub _build_command {
 (let ((*standard-output* (make-broadcast-stream)))
   (handler-case #+quicklisp (ql:quickload :shelly) #-quicklisp (asdf:load-system :shelly)
     (#+quicklisp ql::system-not-found #-quicklisp asdf:missing-component (c)
-     (format *error-output* "~&Error: ~A~&" c)
+     (format *error-output* "~&[error] ~A~&" c)
      #+quicklisp
      (format *error-output* "~&Try (ql:update-all-dists) to ensure your dist is up to date.~%")
      #+allegro (exit 1 :quiet t)
