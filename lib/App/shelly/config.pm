@@ -3,8 +3,9 @@ package App::shelly::config;
 use strict;
 use warnings;
 use Exporter::Lite;
+use Path::Class qw(dir);
 
-our @EXPORT_OK = qw(config config_path dumped_core_path);
+our @EXPORT_OK = qw(config config_path dumped_core_path shelly_path);
 
 my $local_base_path = $ENV{HOME} . '/.shelly/';
 
@@ -20,6 +21,15 @@ sub config_path {
     }
 
     return local_path('config');
+}
+
+sub shelly_path {
+    if (exists $ENV{SHELLY_PATH}) {
+        return $ENV{SHELLY_PATH};
+    }
+    if (-e local_path('shelly/')) {
+        return local_path('shelly/')
+    }
 }
 
 sub dumped_core_path {

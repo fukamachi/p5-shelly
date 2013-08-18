@@ -7,7 +7,7 @@ use Getopt::Long qw(:config gnu_getopt pass_through);
 use File::Which qw(which);
 
 use App::shelly::impl;
-use App::shelly::config qw(config dumped_core_path);
+use App::shelly::config qw(config dumped_core_path shelly_path);
 
 sub impl {
     sub { App::shelly::impl->param(@_); }
@@ -83,6 +83,7 @@ sub _build_command {
     $ENV{LISP_BINARY} = $lisp_bin;
 
     if ( $self->{noinit} ) {
+        # FIXME: Need to load Quicklisp even when `--noinit' is specified.
         $lisp_bin .= ' ' . impl->('noinit_option');
     }
 
@@ -96,6 +97,11 @@ sub _build_command {
         unless ( $self->{lisp_impl} eq 'ecl' ) {
             print STDERR
 "Warning: Core image wasn't found. It is probably slow, isn't it? Try \"shly dump-core\".\n";
+        }
+
+        if (my $shelly_path = shelly_path) {
+            push @evals, "(require (quote asdf))";
+            push @evals, qq'(setf asdf:*central-registry* (cons #P"$shelly_path" asdf:*central-registry*))';
         }
 
         push @evals, <<END_OF_LISP;
@@ -121,8 +127,8 @@ END_OF_LISP
         push @evals, "(shelly.util::load-systems :$_)";
     }
 
-    my $shlyfile = $self->{shlyfile} || 'shlyfile';
-    if (-f $shlyfile) {
+    my $shlyfile = exists $self->{shlyfile} ? $self->{shlyfile} : 'shlyfile';
+    if ($shlyfile && -f $shlyfile) {
         push @evals, qq{(shelly.util::load-shlyfile #P"$shlyfile")};
     }
 
