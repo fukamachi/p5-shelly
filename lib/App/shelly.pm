@@ -87,6 +87,7 @@ sub _build_command {
         $lisp_bin .= ' ' . impl->('noinit_option');
     }
 
+    my @args = @{ $self->{argv} };
     my @evals = ();
 
     if ( -e dumped_core_path ) {
@@ -94,9 +95,9 @@ sub _build_command {
           ( $lisp_bin, impl->('core_option'), dumped_core_path );
     }
     else {
-        unless ( $self->{lisp_impl} eq 'ecl' ) {
+        unless ($self->{lisp_impl} eq 'ecl' || $args[0] eq 'install') {
             print STDERR
-"Warning: Core image wasn't found. It is probably slow, isn't it? Try \"shly dump-core\".\n";
+                "Warning: Core image wasn't found. It is probably slow, isn't it? Try \"shly dump-core\".\n";
         }
 
         if (my $shelly_path = shelly_path) {
@@ -118,7 +119,7 @@ END_OF_LISP
         push @evals, '(shelly.util::shadowing-use-package :shelly)';
     }
 
-    if ( config->{version} ) {
+    if ($args[0] ne 'install' && config->{version}) {
         push @evals,
           qq((shelly.util::check-version "@{[ config->{version} ]}"));
     }
@@ -133,8 +134,6 @@ END_OF_LISP
     }
 
     {
-        my @args = @{ $self->{argv} };
-
         if ( @args > 0 ) {
             s/^\'/'\\''/ for @args;
             my $eval_expr =
