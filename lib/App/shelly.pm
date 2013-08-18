@@ -100,6 +100,10 @@ sub _build_command {
                 "Warning: Core image wasn't found. It is probably slow, isn't it? Try \"shly dump-core\".\n";
         }
 
+        push @evals, <<END_OF_LISP;
+#-quicklisp (format *error-output* "~&[error] Shelly requires Quicklisp but it isn't loaded.~%")
+END_OF_LISP
+
         if (my $shelly_path = shelly_path) {
             push @evals, "(require (quote asdf))";
             push @evals, qq'(setf asdf:*central-registry* (cons #P"$shelly_path" asdf:*central-registry*))';
