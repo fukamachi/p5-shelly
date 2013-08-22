@@ -101,7 +101,7 @@ sub _build_command {
         }
 
         push @evals, <<END_OF_LISP;
-#-quicklisp (format *error-output* "~&[error] Shelly requires Quicklisp but it isn't loaded.~%")
+#-quicklisp (format *error-output* "~&[error] Shelly requires Quicklisp.~%") #+quicklisp t
 END_OF_LISP
 
         if (my $shelly_path = shelly_path) {
