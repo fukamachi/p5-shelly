@@ -30,12 +30,13 @@ sub parse_options {
     push @ARGV, @argv;
 
     GetOptions(
-        'help|h'   => \$self->{help},
-        'impl|I=s' => \$self->{lisp_impl},
-        'load|L=s' => \my $libraries,
-        'file|f=s' => \$self->{shlyfile},
-        'verbose'  => \$self->{verbose},
-        'debug'    => \$self->{debug},
+        'help|h'    => \$self->{help},
+        'impl|I=s'  => \$self->{lisp_impl},
+        'load|L=s'  => \my $libraries,
+        'file|f=s'  => \$self->{shlyfile},
+        'version|V' => \$self->{version},
+        'verbose'   => \$self->{verbose},
+        'debug'     => \$self->{debug},
     );
 
     if ($libraries) {
@@ -51,6 +52,11 @@ sub parse_options {
 
 sub doit {
     my ($self) = @_;
+
+    if ($self->{version}) {
+        printf "Shelly ver %s\n", config->{version};
+        exit;
+    }
 
     unless ( $self->{lisp_impl} ) {
         $self->{lisp_impl} = $self->detect_installed_lisp;
@@ -235,6 +241,10 @@ Tell what Lisp implementation to use. The default is $LISP_IMPL.
 =item B<-L, --load [library1,library2,...]>
 
 Load libraries before executing the expression.
+
+=item B<-V, --version>
+
+Print the version of Shelly and exit.
 
 =item B<--verbose>
 
