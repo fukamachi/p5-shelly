@@ -146,7 +146,11 @@ sub _build_command_for_others {
 
     $command->check_shelly_version;
     $command->load_libraries($self->{load_libraries});
-    my $shlyfile = defined $self->{shlyfile} ? $self->{shlyfile} : 'shlyfile';
+    my $shlyfile = defined $self->{shlyfile} ? $self->{shlyfile}
+        : -f 'shlyfile'      ? 'shlyfile'
+        : -f 'shlyfile.lisp' ? 'shlyfile.lisp'
+        : -f 'shlyfile.cl'   ? 'shlyfile.cl'
+        : undef;
     $command->load_shlyfile($shlyfile);
     $command->run_shelly_command($self->{argv}, $self->{verbose});
 
