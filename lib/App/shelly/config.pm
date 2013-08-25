@@ -5,7 +5,7 @@ use warnings;
 use Exporter::Lite;
 use Path::Class qw(dir);
 
-our @EXPORT_OK = qw(config config_path dumped_core_path shelly_path);
+our @EXPORT_OK = qw(config config_path dumped_core_path shelly_path local_path);
 
 my $local_base_path = $ENV{HOME} . '/.shelly/';
 

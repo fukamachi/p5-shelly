@@ -7,7 +7,7 @@ use Getopt::Long qw(:config gnu_getopt pass_through);
 use File::Which qw(which);
 
 use App::shelly::impl;
-use App::shelly::config qw(config dumped_core_path);
+use App::shelly::config qw(config dumped_core_path local_path);
 use App::shelly::command;
 
 sub impl {
@@ -146,12 +146,17 @@ sub _build_command_for_others {
 
     $command->check_shelly_version;
     $command->load_libraries($self->{load_libraries});
-    my $shlyfile = defined $self->{shlyfile} ? $self->{shlyfile}
-        : -f 'shlyfile'      ? 'shlyfile'
-        : -f 'shlyfile.lisp' ? 'shlyfile.lisp'
-        : -f 'shlyfile.cl'   ? 'shlyfile.cl'
-        : undef;
-    $command->load_shlyfile($shlyfile);
+
+    my @shlyfile = qw(shlyfile shlyfile.lisp shlyfile.cl);
+    $command->load_shlyfile(
+        [ grep { -f $_ } map { local_path($_) } @shlyfile ]->[0]
+    );
+    $command->load_shlyfile(
+        defined $self->{shlyfile}
+            ? $self->{shlyfile}
+            : [ grep { -f $_ } @shlyfile ]->[0]
+    );
+
     $command->run_shelly_command($self->{argv}, $self->{verbose});
 
     return $command->stringify;
