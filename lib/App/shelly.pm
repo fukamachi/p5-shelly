@@ -130,11 +130,11 @@ sub _build_command_for_others {
 
     $command->add_option(impl->('noinit_option'));
 
-    if (-e dumped_core_path) {
+    if (!exists $ENV{SHELLY_PATH} && -e dumped_core_path) {
         $command->add_option(impl->('core_option'), dumped_core_path);
     }
     else {
-        if ($self->{lisp_impl} ne 'ecl') {
+        if (!exists $ENV{SHELLY_PATH} && $self->{lisp_impl} ne 'ecl') {
             print STDERR
                 "Warning: Core image wasn't found. It is probably slow, isn't it? Try \"shly dump-core\".\n";
         }
