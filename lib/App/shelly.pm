@@ -81,7 +81,7 @@ sub doit {
         print $command, "\n";
     }
 
-    system(qq($command 2>&1));
+    system($command);
 }
 
 sub build_command {
