@@ -67,7 +67,7 @@ sub pack_modules {
     $packer->packlists_to_tree($path, \@packlists);
 }
 
-my @modules = grep !in_lib(mod_to_pm($_)), find_requires(qw(lib/App/shelly.pm lib/App/shelly/impl.pm lib/App/shelly/config.pm));
+my @modules = grep !in_lib(mod_to_pm($_)), find_requires(qw(lib/App/shelly.pm lib/App/shelly/impl.pm lib/App/shelly/config.pm lib/App/shelly/command.pm));
 pack_modules(cwd . "/fatlib", \@modules, [ 'local::lib', 'Exporter' ]);
 
 use Config;

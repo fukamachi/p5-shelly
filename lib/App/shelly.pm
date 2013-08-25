@@ -7,7 +7,8 @@ use Getopt::Long qw(:config gnu_getopt pass_through);
 use File::Which qw(which);
 
 use App::shelly::impl;
-use App::shelly::config qw(config dumped_core_path shelly_path);
+use App::shelly::config qw(config dumped_core_path);
+use App::shelly::command;
 
 sub impl {
     sub { App::shelly::impl->param(@_); }
@@ -70,7 +71,11 @@ sub doit {
         exit 1;
     }
 
-    my $command = $self->_build_command;
+
+    my $lisp_bin = $ENV{LISP_BINARY} || impl->('binary') || $self->{lisp_impl};
+    $ENV{LISP_BINARY} = $lisp_bin;
+
+    my $command = $self->build_command;
 
     if ( $self->{debug} ) {
         print $command, "\n";
@@ -79,104 +84,73 @@ sub doit {
     system(qq($command 2>&1));
 }
 
-sub _build_command {
+sub build_command {
     my ($self) = @_;
 
-    my $lisp_bin = $ENV{LISP_BINARY} || impl->('binary') || $self->{lisp_impl};
+    my $task = $self->{argv}->[0] || '';
 
-    $ENV{LISP_BINARY} = $lisp_bin;
+    return
+        $task eq 'install'   ? $self->_build_command_for_install
+      : $task eq 'dump-core' ? $self->_build_command_for_dump_core
+      : $self->_build_command_for_others;
+}
 
-    my @args = @{ $self->{argv} };
-    my @evals = ();
-    my $is_installing = ($args[0] || '') eq 'install';
+sub _build_command_for_install {
+    my ($self) = @_;
 
-    unless ($is_installing) {
-        $lisp_bin .= ' ' . impl->('noinit_option');
-    }
+    my $command = App::shelly::command->new;
 
-    push @evals, <<END_OF_LISP;
-#-quicklisp (format *error-output* "~&[error] Shelly requires Quicklisp.~%") #+quicklisp t
-END_OF_LISP
+    $command->requires_quicklisp;
+    $command->load_shelly;
+    $command->load_libraries($self->{load_libraries});
+    $command->run_shelly_command($self->{argv}, $self->{verbose});
 
-    if (!$is_installing && -e dumped_core_path) {
-        $lisp_bin = join ' ',
-            ( $lisp_bin, impl->('core_option'), dumped_core_path );
+    return $command->stringify;
+}
+
+sub _build_command_for_dump_core {
+    my ($self) = @_;
+
+    my $command = App::shelly::command->new;
+
+    $command->load_quicklisp;
+    $command->requires_quicklisp;
+    $command->load_shelly;
+    $command->check_shelly_version;
+    $command->load_libraries($self->{load_libraries});
+    $command->run_shelly_command($self->{argv}, $self->{verbose});
+
+    return $command->stringify;
+}
+
+sub _build_command_for_others {
+    my ($self) = @_;
+
+    my $command = App::shelly::command->new;
+
+    $command->add_option(impl->('noinit_option'));
+
+    if (-e dumped_core_path) {
+        $command->add_option(impl->('core_option'), dumped_core_path);
     }
     else {
-        if (!$is_installing && $self->{lisp_impl} ne 'ecl') {
+        if ($self->{lisp_impl} ne 'ecl') {
             print STDERR
                 "Warning: Core image wasn't found. It is probably slow, isn't it? Try \"shly dump-core\".\n";
         }
 
-        if (!$is_installing && config->{quicklisp_home}) {
-            push @evals, <<END_OF_LISP;
-(let ((quicklisp-init (merge-pathnames "@{[ config->{quicklisp_home} ]}/setup.lisp")))
-  (when (probe-file quicklisp-init)
-    (load quicklisp-init)))
-END_OF_LISP
-        }
-
-        push @evals, <<END_OF_LISP;
-(let ((*standard-output* (make-broadcast-stream)))
-  (handler-case #+quicklisp (ql:quickload :shelly) #-quicklisp (asdf:load-system :shelly)
-    (#+quicklisp ql::system-not-found #-quicklisp asdf:missing-component (c)
-     (format *error-output* "~&[error] ~A~&" c)
-     #+quicklisp
-     (format *error-output* "~&Try (ql:update-all-dists) to ensure your dist is up to date.~%")
-     #+allegro (exit 1 :quiet t)
-     #-allegro (quit)))
-  (values))
-END_OF_LISP
-        push @evals, '(shelly.util::shadowing-use-package :shelly)';
+        $command->load_quicklisp;
+        $command->requires_quicklisp;
+        $command->load_shelly;
     }
 
-    unless ($is_installing) {
-        if (my $shelly_path = shelly_path) {
-            push @evals, "(require (quote asdf))";
-            push @evals, qq'(setf asdf:*central-registry* (cons #P"$shelly_path" asdf:*central-registry*))';
-        }
-
-        if (config->{version}) {
-            push @evals,
-                qq((shelly.util::check-version "@{[ config->{version} ]}"));
-        }
-    }
-
-    for ( @{ $self->{load_libraries} } ) {
-        push @evals, "(shelly.util::load-systems :$_)";
-    }
-
+    $command->check_shelly_version;
+    $command->load_libraries($self->{load_libraries});
     my $shlyfile = defined $self->{shlyfile} ? $self->{shlyfile} : 'shlyfile';
-    if ($shlyfile && -f $shlyfile) {
-        push @evals, qq{(shelly.util::load-shlyfile #P"$shlyfile")};
-    }
+    $command->load_shlyfile($shlyfile);
+    $command->run_shelly_command($self->{argv}, $self->{verbose});
 
-    {
-        if ( @args > 0 ) {
-            s/^\'/'\\''/ for @args;
-            my $eval_expr =
-              sprintf '(shelly.core::interpret (list %s) :verbose %s)',
-              ( join " ", ( map { "\"$_\"" } @args ) ),
-              $self->{verbose} ? 't' : 'nil';
-            push @evals, $eval_expr;
-            push @evals, '(swank-backend:quit-lisp)';
-        }
-        else {
-            push @evals, sprintf '(shelly::run-repl :verbose %s)',
-              $self->{verbose} ? 't' : 'nil';
-        }
-    }
-
-    my $command = join ' ', $lisp_bin,
-      (
-          impl->('pre_options')
-        ? impl->('pre_options')
-        : ()
-      ),
-      ( map { ( impl->('eval'), "'$_'" ) } @evals ),
-      impl->('other_options');
-
-    return $command;
+    return $command->stringify;
 }
 
 sub detect_installed_lisp {
