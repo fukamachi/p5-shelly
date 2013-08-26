@@ -16,6 +16,7 @@ sub new {
     return bless {
         lisp_bin => $args{lisp_bin} || $ENV{LISP_BINARY},
         options  => [],
+        core     => undef,
     }, $class;
 }
 
@@ -27,6 +28,11 @@ sub add_option {
 sub add_eval_option {
     my ($self, $command) = @_;
     $self->add_option(impl->('eval'), "'$command'");
+}
+
+sub set_core {
+    my ($self, $core) = @_;
+    $self->{core} = $core;
 }
 
 sub requires_quicklisp {
@@ -126,6 +132,7 @@ sub stringify {
     my ($self) = @_;
 
     return join ' ', $self->{lisp_bin},
+        ($self->{core} ? (impl->('core_option'), $self->{core}) : ()),
         (impl->('pre_options') || ()), @{ $self->{options} }, (impl->('other_options') || ());
 }
 

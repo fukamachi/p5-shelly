@@ -131,7 +131,7 @@ sub _build_command_for_others {
     $command->add_option(impl->('noinit_option'));
 
     if (!exists $ENV{SHELLY_PATH} && -e dumped_core_path) {
-        $command->add_option(impl->('core_option'), dumped_core_path);
+        $command->set_core(dumped_core_path);
     }
     else {
         if (!exists $ENV{SHELLY_PATH} && $self->{lisp_impl} ne 'ecl') {
