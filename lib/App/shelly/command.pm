@@ -52,7 +52,8 @@ sub load_shelly {
      #+quicklisp
      (format *error-output* "~&Try (ql:update-all-dists) to ensure your dist is up to date.~%")
      #+allegro (exit 1 :quiet t)
-     #-allegro (quit)))
+     #+sbcl    (sb-ext:exit)
+     #-(or allegro sbcl) (quit)))
   (values))
 END_OF_LISP
     $self->add_eval_option('(shelly.util::shadowing-use-package :shelly)');
