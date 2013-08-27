@@ -46,7 +46,7 @@ sub parse_options {
 
     $self->{argv} = \@ARGV;
 
-    if ( $self->{help} || !@ARGV ) {
+    if ( $self->{help} || (!$self->{version} && !@ARGV) ) {
         $self->{help} = 1;
         $self->{argv} = ['shelly::help'];
     }
