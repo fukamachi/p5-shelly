@@ -30,12 +30,11 @@ config sbcl => +{
 
 config alisp => +{
     impl_name     => 'alisp',
-    pre_options   => '-L ~/.clinit.cl',
     eval          => '-e',
     other_options => '',
     binary        => App::shelly::config::config('alisp')->{binary_path},
     core_option   => '-I',
-    noinit_option => '-q',
+    noinit_option => '--qq',
 };
 
 config clisp => +{
