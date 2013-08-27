@@ -116,13 +116,6 @@ sub run_shelly_command {
     $self->quit_lisp;
 }
 
-sub run_repl {
-    my ($self, $verbose) = @_;
-    $self->add_eval_option(
-        sprintf '(shelly::run-repl :verbose %s)', $verbose ? 't' : 'nil'
-    );
-}
-
 sub stringify {
     my ($self) = @_;
 
