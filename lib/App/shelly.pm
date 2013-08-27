@@ -46,8 +46,9 @@ sub parse_options {
 
     $self->{argv} = \@ARGV;
 
-    if ( $self->{help} ) {
-        $self->{argv}   = ['shelly::help'];
+    if ( $self->{help} || !@ARGV ) {
+        $self->{help} = 1;
+        $self->{argv} = ['shelly::help'];
     }
 }
 

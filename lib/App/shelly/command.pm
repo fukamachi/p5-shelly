@@ -107,18 +107,13 @@ sub run_shelly_command {
     my ($self, $args, $verbose) = @_;
 
     my @args = @$args;
-    if (@args > 0) {
-        s/^\'/'\\''/ for @args;
-        my $eval_expr =
-            sprintf '(shelly.core::interpret (list %s) :verbose %s)',
-                ( join " ", ( map { "\"$_\"" } @args ) ),
-                    $verbose ? 't' : 'nil';
-        $self->add_eval_option($eval_expr);
-        $self->quit_lisp;
-    }
-    else {
-        $self->run_repl($verbose);
-    }
+    s/^\'/'\\''/ for @args;
+    my $eval_expr =
+        sprintf '(shelly.core::interpret (list %s) :verbose %s)',
+            ( join " ", ( map { "\"$_\"" } @args ) ),
+                $verbose ? 't' : 'nil';
+    $self->add_eval_option($eval_expr);
+    $self->quit_lisp;
 }
 
 sub run_repl {
