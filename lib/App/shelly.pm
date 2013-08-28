@@ -31,11 +31,9 @@ sub parse_options {
     push @ARGV, @argv;
 
     GetOptions(
-        'help|h'    => \$self->{help},
         'impl|I=s'  => \$self->{lisp_impl},
         'load|L=s'  => \my $libraries,
         'file|f=s'  => \$self->{shlyfile},
-        'version|V' => \$self->{version},
         'verbose'   => \$self->{verbose},
         'debug'     => \$self->{debug},
     );
@@ -46,8 +44,11 @@ sub parse_options {
 
     $self->{argv} = \@ARGV;
 
-    if ( $self->{help} || (!$self->{version} && !@ARGV) ) {
-        $self->{help} = 1;
+    if (@ARGV == 1 && $ARGV[0] =~ /^(?:--version|-V)$/) {
+        $self->{version} = 1;
+    }
+
+    if (!@ARGV || (@ARGV == 1 && $ARGV[0] =~ /^(?:--help|-h)$/)) {
         $self->{argv} = ['shelly::help'];
     }
 }
