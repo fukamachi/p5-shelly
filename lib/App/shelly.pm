@@ -149,14 +149,11 @@ sub _build_command_for_others {
     $command->check_shelly_version;
     $command->load_libraries($self->{load_libraries});
 
-    my @shlyfile = qw(shlyfile shlyfile.lisp shlyfile.cl);
-    $command->load_shlyfile(
-        [ grep { -f $_ } map { local_path($_) } @shlyfile ]->[0]
-    );
-    $command->load_shlyfile(
+    $command->add_eval_option(q{(shelly.util::load-global-shlyfile)});
+    $command->add_eval_option(
         defined $self->{shlyfile}
-            ? $self->{shlyfile}
-            : [ grep { -f $_ } @shlyfile ]->[0]
+            ? (sprintf q{(shelly.util::load-local-shlyfile #P"%s")}, $self->{shlyfile})
+            : q{(shelly.util::load-local-shlyfile)}
     );
 
     $command->run_shelly_command($self->{argv}, $self->{verbose});

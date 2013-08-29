@@ -80,14 +80,6 @@ sub load_libraries {
     }
 }
 
-sub load_shlyfile {
-    my ($self, $shlyfile) = @_;
-
-    if ($shlyfile && -f $shlyfile) {
-        $self->add_eval_option(qq{(shelly.util::load-shlyfile #P"$shlyfile")});
-    }
-}
-
 sub quit_lisp {
     $_[0]->add_eval_option('(swank-backend:quit-lisp)');
 }
