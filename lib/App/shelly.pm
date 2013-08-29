@@ -49,6 +49,7 @@ sub parse_options {
     }
 
     if (!@ARGV || (@ARGV == 1 && $ARGV[0] =~ /^(?:--help|-h)$/)) {
+        $self->{help} = 1;
         $self->{argv} = ['shelly::help'];
     }
 }
