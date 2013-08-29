@@ -37,7 +37,7 @@ sub set_core {
 
 sub requires_quicklisp {
     $_[0]->add_eval_option(<<END_OF_LISP);
-#-quicklisp (format *error-output* "~&[error] Shelly requires Quicklisp.~%") #+quicklisp t
+#-quicklisp (format *error-output* "~&Error: Shelly requires Quicklisp.~%") #+quicklisp t
 END_OF_LISP
 }
 
@@ -54,7 +54,7 @@ sub load_shelly {
 (let ((*standard-output* (make-broadcast-stream)))
   (handler-case #+quicklisp (ql:quickload :shelly) #-quicklisp (asdf:load-system :shelly)
     (#+quicklisp ql::system-not-found #-quicklisp asdf:missing-component (c)
-     (format *error-output* "~&[error] ~A~&" c)
+     (format *error-output* "~&Error: ~A~&" c)
      #+quicklisp
      (format *error-output* "~&Try (ql:update-all-dists) to ensure your dist is up to date.~%")
      #+allegro (exit 1 :quiet t)
