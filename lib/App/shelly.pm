@@ -84,7 +84,7 @@ sub doit {
         print $command, "\n";
     }
 
-    system($command);
+    !system($command);
 }
 
 sub build_command {
