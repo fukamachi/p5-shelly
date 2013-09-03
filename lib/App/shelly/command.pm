@@ -51,13 +51,13 @@ sub load_shelly {
     }
 
     $self->add_eval_option(<<END_OF_LISP);
-(let ((*standard-output* (make-broadcast-stream)))
+(let ((*standard-output* (make-broadcast-stream)) #+allegro(*readtable* (copy-readtable)))
   (handler-case #+quicklisp (ql:quickload :shelly) #-quicklisp (asdf:load-system :shelly)
     (#+quicklisp ql::system-not-found #-quicklisp asdf:missing-component (c)
      (format *error-output* "~&Error: ~A~&" c)
      #+quicklisp
      (format *error-output* "~&Try (ql:update-all-dists) to ensure your dist is up to date.~%")
-     #+allegro (exit 1 :quiet t)
+     #+allegro (excl:exit 1 :quiet t)
      #+sbcl    (sb-ext:exit)
      #-(or allegro sbcl) (quit)))
   (values))
