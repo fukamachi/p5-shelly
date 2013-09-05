@@ -30,11 +30,12 @@ config sbcl => +{
 
 config alisp => +{
     impl_name     => 'alisp',
-    pre_options   => q{-batch -e '(loop for filename in excl:*init-file-names* for file = (merge-pathnames filename (user-homedir-pathname)) when (probe-file file) do (load file))'},
+    pre_options   => '-batch',
     eval          => '-e',
     other_options => '-kill',
     binary        => App::shelly::config::config('alisp')->{binary_path},
     core_option   => '-I',
+    init_option   => q{-e '(loop for filename in excl:*init-file-names* for file = (merge-pathnames filename (user-homedir-pathname)) when (probe-file file) do (load file))'},
     noinit_option => '-qq',
 };
 

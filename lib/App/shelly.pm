@@ -103,6 +103,9 @@ sub _build_command_for_install {
 
     my $command = App::shelly::command->new;
 
+    if (impl->('init_option')) {
+        $command->add_option(impl->('init_option'));
+    }
     $command->requires_quicklisp;
     $command->load_shelly;
     $command->load_libraries($self->{load_libraries});
