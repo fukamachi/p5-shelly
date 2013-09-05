@@ -92,6 +92,8 @@ $fatpacked{"App/shelly.pm"} = <<'APP_SHELLY';
           print $command, "\n";
       }
   
+      local $ENV{SHELLY_VERSION} = config->{version};
+  
       !system($command);
   }
   

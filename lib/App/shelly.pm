@@ -84,6 +84,8 @@ sub doit {
         print $command, "\n";
     }
 
+    local $ENV{SHELLY_VERSION} = config->{version};
+
     !system($command);
 }
 
