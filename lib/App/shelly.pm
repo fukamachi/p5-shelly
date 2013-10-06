@@ -86,16 +86,7 @@ sub doit {
 
     local $ENV{SHELLY_VERSION} = config->{version};
 
-    if (my $pid = fork) {
-        local $SIG{TERM} = sub { kill("TERM", $pid) };
-        local $SIG{HUP}  = sub { kill("HUP", $pid) };
-        local $SIG{INT}  = sub { kill("INT", $pid) };
-        wait;
-        return 1;
-    }
-    else {
-        exec($command);
-    }
+    exec($command);
 }
 
 sub build_command {
