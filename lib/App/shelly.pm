@@ -121,6 +121,8 @@ sub _build_command_for_dump_core {
 
     my $command = App::shelly::command->new;
 
+    $command->add_option(impl->('noinit_option'));
+
     $command->load_quicklisp;
     $command->requires_quicklisp;
     $command->load_shelly;
