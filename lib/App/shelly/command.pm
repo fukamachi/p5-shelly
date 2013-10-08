@@ -27,7 +27,7 @@ sub add_option {
 
 sub add_eval_option {
     my ($self, $command) = @_;
-    $self->add_option(impl->('eval'), "'$command'");
+    $self->add_option(impl->('eval'), $command);
 }
 
 sub set_core {
@@ -99,7 +99,6 @@ sub run_shelly_command {
     my ($self, $args, $verbose) = @_;
 
     my @args = @$args;
-    s/^\'/'\\''/ for @args;
     my $eval_expr =
         sprintf '(shelly.core::interpret (list %s) :verbose %s)',
             ( join " ", ( map { "\"$_\"" } @args ) ),
@@ -108,12 +107,22 @@ sub run_shelly_command {
     $self->quit_lisp;
 }
 
+sub arrayfy {
+    my ($self) = @_;
+
+    return (
+        $self->{lisp_bin},
+        ($self->{core} ? (impl->('core_option'), $self->{core}) : ()),
+        @{ impl->('pre_options') || [] },
+        @{ $self->{options} },
+        @{ impl->('other_options') || [] },
+    );
+}
+
 sub stringify {
     my ($self) = @_;
 
-    return join ' ', $self->{lisp_bin},
-        ($self->{core} ? (impl->('core_option'), $self->{core}) : ()),
-        (impl->('pre_options') || ()), @{ $self->{options} }, (impl->('other_options') || ());
+    return join ' ', $self->arrayfy;
 }
 
 1;

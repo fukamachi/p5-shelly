@@ -81,12 +81,12 @@ sub doit {
     my $command = $self->build_command;
 
     if ( $self->{debug} ) {
-        print $command, "\n";
+        print $command->stringify, "\n";
     }
 
     local $ENV{SHELLY_VERSION} = config->{version};
 
-    exec($command);
+    exec($command->arrayfy);
 }
 
 sub build_command {
@@ -106,14 +106,14 @@ sub _build_command_for_install {
     my $command = App::shelly::command->new;
 
     if (impl->('init_option')) {
-        $command->add_option(impl->('init_option'));
+        $command->add_option(@{ impl->('init_option') });
     }
     $command->requires_quicklisp;
     $command->load_shelly;
     $command->load_libraries($self->{load_libraries});
     $command->run_shelly_command($self->{argv}, $self->{verbose});
 
-    return $command->stringify;
+    return $command;
 }
 
 sub _build_command_for_dump_core {
@@ -128,7 +128,7 @@ sub _build_command_for_dump_core {
     $command->load_libraries($self->{load_libraries});
     $command->run_shelly_command($self->{argv}, $self->{verbose});
 
-    return $command->stringify;
+    return $command;
 }
 
 sub _build_command_for_others {
@@ -164,7 +164,7 @@ sub _build_command_for_others {
 
     $command->run_shelly_command($self->{argv}, $self->{verbose});
 
-    return $command->stringify;
+    return $command;
 }
 
 sub detect_installed_lisp {
